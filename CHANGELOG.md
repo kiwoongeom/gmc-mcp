@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-05-02
+
+### Added
+- Published to the official **MCP Registry** at
+  [registry.modelcontextprotocol.io](https://registry.modelcontextprotocol.io)
+  under the namespace `io.github.kiwoongeom/gmc-mcp`. Discoverable from Claude
+  Desktop's MCP Registry browser and any other MCP-Registry-aware client.
+- New file `server.json` — MCP Registry manifest with package + transport +
+  environment-variable schema.
+- New CI workflow `.github/workflows/publish-mcp-registry.yml` — auto-publishes
+  to the MCP Registry on every `v*` tag push, using GitHub OIDC (no tokens).
+- README now contains a `mcp-name:` HTML comment as required for PyPI-package
+  ownership verification by the MCP Registry.
+
 ## [0.2.1] - 2026-05-02
 
 ### Changed

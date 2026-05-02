@@ -1,3 +1,5 @@
+<!-- mcp-name: io.github.kiwoongeom/gmc-mcp -->
+
 # Google Merchant Center MCP (`gmc-mcp`)
 
 [![PyPI](https://img.shields.io/pypi/v/gmc-mcp.svg)](https://pypi.org/project/gmc-mcp/)

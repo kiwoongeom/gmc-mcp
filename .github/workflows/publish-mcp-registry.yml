@@ -1,0 +1,40 @@
+name: Publish to MCP Registry
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch: {}
+
+jobs:
+  publish-mcp:
+    needs: []
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # required for OIDC auth to MCP Registry
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Wait for the PyPI release to land
+        # The publish.yml workflow uploads to PyPI on the same tag; the registry
+        # validation step requires the package to already be on PyPI. Sleep is
+        # cheaper than orchestrating workflow_run dependencies for a one-off push.
+        run: sleep 90
+
+      - name: Sync server.json version with the pushed tag
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          jq --arg v "$VERSION" '.version = $v | (.packages[] | .version) = $v' server.json > server.tmp
+          mv server.tmp server.json
+          cat server.json
+
+      - name: Install mcp-publisher
+        run: |
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+
+      - name: Authenticate to MCP Registry (GitHub OIDC)
+        run: ./mcp-publisher login github-oidc
+
+      - name: Publish to MCP Registry
+        run: ./mcp-publisher publish
