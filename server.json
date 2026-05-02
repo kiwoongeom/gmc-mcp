@@ -6,24 +6,15 @@
     "url": "https://github.com/kiwoongeom/gmc-mcp",
     "source": "github"
   },
-  "version": "0.2.3",
+  "version": "0.2.4",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "gmc-mcp",
-      "version": "0.2.3",
+      "version": "0.2.4",
       "transport": {
         "type": "stdio"
       },
-      "runtimeArguments": [
-        {
-          "type": "named",
-          "name": "run",
-          "description": "Subcommand to start the MCP server (the default).",
-          "isRequired": false,
-          "default": "run"
-        }
-      ],
       "environmentVariables": [
         {
           "name": "GMC_ACCOUNT_ID",

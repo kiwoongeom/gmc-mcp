@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.4] - 2026-05-02
+
+### Fixed
+- Removed `runtimeArguments` from `server.json` (was triggering MCP Registry
+  semantic validation on the `default` field). The CLI invokes the `run`
+  subcommand automatically when called with no arguments, so the runtime
+  argument was redundant anyway.
+
 ## [0.2.3] - 2026-05-02
 
 ### Fixed
