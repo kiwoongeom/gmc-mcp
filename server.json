@@ -1,17 +1,17 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.kiwoongeom/gmc-mcp",
-  "description": "Google Merchant Center MCP — the first free, open-source, self-hosted MCP server for Google Merchant Center. 126 tools over Merchant API v1 covering products, inventory, Reports SQL, promotions, returns, account config, audit log + rollback, dry-run. Self-hosted alternative to paid SaaS connectors (Adzviser, Catchr, Windsor.ai, Pipedream).",
+  "description": "Free open-source MCP server for Google Merchant Center: 126 tools over Merchant API v1.",
   "repository": {
     "url": "https://github.com/kiwoongeom/gmc-mcp",
     "source": "github"
   },
-  "version": "0.2.2",
+  "version": "0.2.3",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "gmc-mcp",
-      "version": "0.2.2",
+      "version": "0.2.3",
       "transport": {
         "type": "stdio"
       },

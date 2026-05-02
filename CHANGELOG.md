@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-05-02
+
+### Fixed
+- `server.json` description shortened to ≤100 characters to satisfy the
+  MCP Registry validation rule. v0.2.2 publish to the registry failed on
+  this constraint; v0.2.3 retries with a compliant description.
+
 ## [0.2.2] - 2026-05-02
 
 ### Added
