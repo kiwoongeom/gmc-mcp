@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.5] - 2026-05-02
+
+### Changed — positioning corrected (second time)
+After publication, discovered another prior-art self-hosted GMC MCP server:
+[`archpeng/GMC-mcp-server`](https://github.com/archpeng/GMC-mcp-server),
+created 2026-02-23 (10 weeks before this package). My original "first
+open-source self-hosted" claim was inaccurate.
+
+The correct, verifiable framing:
+- Both `archpeng/GMC-mcp-server` and this package are self-hosted Python.
+- `archpeng/GMC-mcp-server` is on **Content API v2.1** (deprecated, Google
+  retires August 2026), **no LICENSE file** (default copyright = not OSS),
+  **not on PyPI**, 34 tools, last updated 2026-02-24.
+- `gmc-mcp` is on **Merchant API v1** (current/future-proof), **MIT-licensed**,
+  **on PyPI** (`pip install gmc-mcp`), 126 tools, audit log + rollback +
+  dry-run + CI to PyPI/Registry.
+
+README, pyproject description, and server.json description rewritten to
+remove the "first" overclaim and present a comparison table instead.
+
 ## [0.2.4] - 2026-05-02
 
 ### Fixed

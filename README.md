@@ -11,15 +11,23 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-> **The first free, open-source, self-hosted MCP server for Google Merchant Center (GMC).**
-> Drive your Google Shopping feed, products, inventory, Reports, promotions,
-> returns, and account configuration in natural language from Claude Desktop,
-> Claude Code, or any MCP-compatible client.
+> **MCP server for Google Merchant Center, built on Merchant API v1.**
+> 126 tools, MIT-licensed, `pip install`-able. Drive your Google Shopping
+> feed, products, inventory, Reports, promotions, returns, and account
+> configuration in natural language from Claude Desktop, Claude Code, or any
+> MCP-compatible client.
 >
-> All other GMC MCP options (Adzviser, Catchr, Windsor.ai, Pipedream) are paid
-> hosted SaaS that proxies your data through a third-party server. This is the
-> first one that's free, you can `pip install`, audit the source of, and run on
-> your own machine — your credentials never leave your computer.
+> ### Where this fits in the GMC + MCP landscape
+>
+> | Option | Type | API | License | Install | Tools |
+> |---|---|---|---|---|---|
+> | Adzviser / Catchr / Windsor.ai / Pipedream | Paid hosted SaaS | varies | proprietary | sign-up | varies |
+> | [archpeng/GMC-mcp-server](https://github.com/archpeng/GMC-mcp-server) | Self-hosted | **Content API v2.1** (deprecated 2026-08) | none declared | git clone | 34 |
+> | **`gmc-mcp` (this package)** | **Self-hosted** | **Merchant API v1** (future-proof) | **MIT** | **`pip install gmc-mcp`** | **126** |
+>
+> Pick this if you want: future-proof API, an actual OSS license, PyPI install,
+> a larger toolset, audit log + rollback + dry-run safety, and credentials that
+> never leave your machine.
 
 Built on **Merchant API v1** (replaces Content API for Shopping; v1beta was
 discontinued 2026-02-28). Safe by default: every write is recorded to an
@@ -33,18 +41,17 @@ Shopping Ads, Buy on Google checkout, YouTube Shopping, and more. Managing a
 feed of thousands of products through the GMC web UI is tedious, and writing
 one-off Python scripts against the Merchant API REST endpoints is slow.
 
-There are existing MCP services for GMC (Adzviser, Catchr, Windsor.ai,
-Pipedream), but they're all paid hosted SaaS that proxies your data through
-their servers. This is the first free + open-source + self-hosted equivalent:
+There are existing MCP services for GMC, but they fit different niches:
 
-| | Paid SaaS connectors | This package |
-|---|---|---|
-| Cost | $$$/month | Free (MIT) |
-| Source | Closed | Open, auditable |
-| Where data lives | Their servers | Your machine |
-| Credentials stored | On their server | Local file |
-| Install | Sign up + pay | `pip install gmc-mcp` |
-| Tool count | ~10–30 (varies) | 126 |
+- **Paid hosted SaaS** (Adzviser, Catchr, Windsor.ai, Pipedream) — your data
+  is proxied through their servers; monthly subscription.
+- **`archpeng/GMC-mcp-server`** — earliest self-hosted Python option (Feb 2026),
+  but built on the deprecated **Content API v2.1** which Google retires in
+  **August 2026**, has no license declared, and isn't on PyPI.
+
+`gmc-mcp` was built to fill the gap: a self-hosted package on the **new
+Merchant API v1**, MIT-licensed, on **PyPI**, with audit/rollback/dry-run
+safety and 126 tools across 19 modules.
 
 The package gives Claude (or any MCP client) **126 tools** that map directly
 onto the Merchant API v1 surface, so you can do things like:

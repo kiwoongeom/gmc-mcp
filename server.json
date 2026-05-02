@@ -1,17 +1,17 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.kiwoongeom/gmc-mcp",
-  "description": "Free open-source MCP server for Google Merchant Center: 126 tools over Merchant API v1.",
+  "description": "MIT-licensed pip-installable MCP for Google Merchant Center on Merchant API v1 (126 tools).",
   "repository": {
     "url": "https://github.com/kiwoongeom/gmc-mcp",
     "source": "github"
   },
-  "version": "0.2.4",
+  "version": "0.2.5",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "gmc-mcp",
-      "version": "0.2.4",
+      "version": "0.2.5",
       "transport": {
         "type": "stdio"
       },
