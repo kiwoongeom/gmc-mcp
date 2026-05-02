@@ -6,10 +6,15 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-> **The first MCP server for Google Merchant Center (GMC).**
+> **The first free, open-source, self-hosted MCP server for Google Merchant Center (GMC).**
 > Drive your Google Shopping feed, products, inventory, Reports, promotions,
 > returns, and account configuration in natural language from Claude Desktop,
 > Claude Code, or any MCP-compatible client.
+>
+> All other GMC MCP options (Adzviser, Catchr, Windsor.ai, Pipedream) are paid
+> hosted SaaS that proxies your data through a third-party server. This is the
+> first one that's free, you can `pip install`, audit the source of, and run on
+> your own machine — your credentials never leave your computer.
 
 Built on **Merchant API v1** (replaces Content API for Shopping; v1beta was
 discontinued 2026-02-28). Safe by default: every write is recorded to an
@@ -18,13 +23,25 @@ destructive bulk operations require an explicit `confirm` parameter.
 
 ## Why this exists
 
-Google Merchant Center (GMC) is what powers Google Shopping listings, Free
-Listings, Shopping Ads, Buy on Google checkout, YouTube Shopping, and more.
-Until now there was no MCP server for it — managing a feed of thousands of
-products through the GMC web UI is tedious, and writing one-off Python scripts
-against the Merchant API REST endpoints is slow.
+Google Merchant Center (GMC) powers Google Shopping listings, Free Listings,
+Shopping Ads, Buy on Google checkout, YouTube Shopping, and more. Managing a
+feed of thousands of products through the GMC web UI is tedious, and writing
+one-off Python scripts against the Merchant API REST endpoints is slow.
 
-This package gives Claude (or any MCP client) **126 tools** that map directly
+There are existing MCP services for GMC (Adzviser, Catchr, Windsor.ai,
+Pipedream), but they're all paid hosted SaaS that proxies your data through
+their servers. This is the first free + open-source + self-hosted equivalent:
+
+| | Paid SaaS connectors | This package |
+|---|---|---|
+| Cost | $$$/month | Free (MIT) |
+| Source | Closed | Open, auditable |
+| Where data lives | Their servers | Your machine |
+| Credentials stored | On their server | Local file |
+| Install | Sign up + pay | `pip install gmc-mcp` |
+| Tool count | ~10–30 (varies) | 126 |
+
+The package gives Claude (or any MCP client) **126 tools** that map directly
 onto the Merchant API v1 surface, so you can do things like:
 
 - *"Show me every disapproved product, grouped by issue code."*
@@ -287,8 +304,8 @@ mypy src/gmc_mcp
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). PRs and issues welcome — this is the
-first MCP for Google Merchant Center, so there's a lot of room for community
-input on which workflows deserve dedicated tools.
+first open-source MCP for Google Merchant Center, so there's a lot of room
+for community input on which workflows deserve dedicated tools.
 
 ## License
 

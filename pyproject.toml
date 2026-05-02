@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "gmc-mcp"
-version = "0.2.0"
-description = "Google Merchant Center MCP — the first MCP server for Google Merchant Center (Merchant API v1). Drive your Google Shopping feed, products, inventory, reports, promotions, returns, and account in natural language from Claude."
+version = "0.2.1"
+description = "Google Merchant Center MCP — the first free, open-source, self-hosted MCP server for Google Merchant Center (Merchant API v1). 126 tools for products, inventory, reports, promotions, returns, and account config. Free alternative to paid SaaS connectors (Adzviser, Catchr, Windsor.ai, Pipedream)."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }

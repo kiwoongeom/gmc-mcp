@@ -7,7 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+## [0.2.1] - 2026-05-02
+
+### Changed
+- README, CHANGELOG, and PyPI description updated for accurate positioning:
+  this is the first **free, open-source, self-hosted** MCP server for Google
+  Merchant Center. All known prior alternatives (Adzviser, Catchr, Windsor.ai,
+  Pipedream) are paid hosted SaaS; Google's MAPI Docs MCP is documentation-
+  lookup only. Differentiators of this package:
+  1. Free (MIT) vs paid SaaS
+  2. Open source — auditable, forkable
+  3. Self-hosted — credentials never leave your machine
+  4. `pip install`-able (no third-party signup)
+  5. 126 tools mapping the full Merchant API v1 surface
+
+### Added (carried over from unreleased)
 - `tools/regions.py`: regions CRUD (list / get / create / update / delete) —
   required to set up regional inventory targeting.
 - `tools/accounts.py`: `gmc_update_business_info` (PATCH businessInfo —
@@ -16,6 +30,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   for re-requesting Shopping Ads / Free Listings approval after fixing issues.
 
 ## [0.2.0] - 2026-05-01
+
+### Positioning
+- **First open-source, self-hosted MCP server for Google Merchant Center.**
+- Existing alternatives at the time of release (Adzviser, Catchr, Windsor.ai,
+  Pipedream, Google's MAPI Docs MCP) are all commercial hosted SaaS or
+  documentation-lookup helpers. This is the first one you can `pip install`,
+  audit the source of, and run with your credentials staying local.
 
 ### Added — full Merchant API v1 surface
 - `tools/return_policies.py`: list / get / create / update / delete `onlineReturnPolicies` (Google now requires a return policy in US/EU).
