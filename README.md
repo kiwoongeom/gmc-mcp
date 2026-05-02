@@ -1,6 +1,9 @@
 # Google Merchant Center MCP (`gmc-mcp`)
 
 [![PyPI](https://img.shields.io/pypi/v/gmc-mcp.svg)](https://pypi.org/project/gmc-mcp/)
+[![Downloads](https://static.pepy.tech/badge/gmc-mcp)](https://pepy.tech/projects/gmc-mcp)
+[![Downloads/month](https://static.pepy.tech/badge/gmc-mcp/month)](https://pepy.tech/projects/gmc-mcp)
+[![GitHub stars](https://img.shields.io/github/stars/kiwoongeom/gmc-mcp?style=social)](https://github.com/kiwoongeom/gmc-mcp/stargazers)
 [![CI](https://github.com/kiwoongeom/gmc-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/kiwoongeom/gmc-mcp/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/pypi/pyversions/gmc-mcp.svg)](https://pypi.org/project/gmc-mcp/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
