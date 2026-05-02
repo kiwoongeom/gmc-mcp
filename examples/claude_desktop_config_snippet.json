@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "gmc": {
+      "command": "C:/Users/erice/Desktop/암꺼나 ai/gmc-mcp/.venv/Scripts/gmc-mcp.exe",
+      "args": ["run"],
+      "env": {
+        "GMC_ACCOUNT_ID": "1234567890",
+        "GMC_SERVICE_ACCOUNT_KEY": "C:/Users/erice/Desktop/암꺼나 ai/gmc-mcp/secrets/service-account.json",
+        "GMC_DRY_RUN": "false",
+        "GMC_LOG_LEVEL": "INFO"
+      }
+    }
+  }
+}

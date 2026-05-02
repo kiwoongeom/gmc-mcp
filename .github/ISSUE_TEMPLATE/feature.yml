@@ -1,0 +1,23 @@
+name: Feature request
+description: Suggest a new tool or capability
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you solving?
+      description: What are you trying to do that the current tools don't let you do?
+    validations:
+      required: true
+  - type: textarea
+    id: shape
+    attributes:
+      label: Proposed tool shape
+      description: |
+        Sketch the tool name, parameters, and what it should return.
+        e.g. `gmc_bulk_price_update(updates: list[{product_id, price_micros, currency}])`
+  - type: textarea
+    id: api
+    attributes:
+      label: Underlying Merchant API endpoint(s)
+      description: Link to the relevant Merchant API v1beta reference if you know it.

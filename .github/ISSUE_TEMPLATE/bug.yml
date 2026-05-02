@@ -1,0 +1,46 @@
+name: Bug report
+description: Something is broken
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: A clear description of the bug, including the tool you called and the input.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Audit log entry / error message
+      description: Run `gmc_audit_tail(5)` and paste the relevant entry. Redact account IDs if you want.
+      render: shell
+  - type: input
+    id: version
+    attributes:
+      label: gmc-mcp version
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      placeholder: 3.12.5
+    validations:
+      required: true
+  - type: dropdown
+    id: auth
+    attributes:
+      label: Auth method
+      options:
+        - service-account
+        - oauth
+    validations:
+      required: true
