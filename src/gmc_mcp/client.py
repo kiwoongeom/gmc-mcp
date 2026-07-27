@@ -63,7 +63,15 @@ class MerchantClient:
     ) -> Any:
         """Perform a single Merchant API request. Returns parsed JSON or {} for 204."""
         url = f"{BASE_URL}/{path.lstrip('/')}"
-        is_write = method.upper() in WRITE_METHODS
+        # ':search' endpoints (reports:search) are read-only queries that use
+        # POST as their transport. They must bypass the dry-run interception,
+        # otherwise every reports-based tool silently returns 0 results under
+        # dry-run — e.g. gmc_list_disapproved_products reporting a clean feed
+        # while hundreds of products are actually disapproved.
+        is_write = (
+            method.upper() in WRITE_METHODS
+            and not path.rstrip("/").endswith(":search")
+        )
 
         if is_write and self.config.dry_run:
             audit_id = self.audit.record(
