@@ -37,6 +37,26 @@ def test_dry_run_skips_network(client: MerchantClient) -> None:
 
 
 @respx.mock
+def test_dry_run_does_not_intercept_search_posts(client: MerchantClient) -> None:
+    """reports:search is a read-only query that happens to use POST; dry-run
+    must let it through, otherwise every reports-based tool silently returns
+    0 results (a disapproved feed reads as a clean one)."""
+    client.config.dry_run = True
+    route = respx.post(
+        f"{BASE_URL}/reports/v1/accounts/1234567890/reports:search"
+    ).mock(
+        return_value=httpx.Response(200, json={"results": [{"productView": {}}]})
+    )
+    out = client.request(
+        "POST",
+        "reports/v1/accounts/1234567890/reports:search",
+        json_body={"query": "SELECT id FROM product_view"},
+    )
+    assert out == {"results": [{"productView": {}}]}
+    assert route.called
+
+
+@respx.mock
 def test_write_writes_audit_entry(client: MerchantClient) -> None:
     respx.post(f"{BASE_URL}/foo/v1/x:insert").mock(
         return_value=httpx.Response(200, json={"name": "ok"})
