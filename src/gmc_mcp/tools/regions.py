@@ -6,6 +6,7 @@ with `gmc_update_regional_inventory(region=...)`.
 
 from __future__ import annotations
 
+import contextlib
 from typing import Any
 
 from ..client import MerchantClient
@@ -18,11 +19,7 @@ def register(mcp, client: MerchantClient) -> None:
     @mcp.tool()
     def gmc_list_regions(max_pages: int = 5) -> dict[str, Any]:
         """List all regions configured on the account."""
-        items = list(
-            client.paginate(
-                "GET", base, items_key="regions", max_pages=max_pages
-            )
-        )
+        items = list(client.paginate("GET", base, items_key="regions", max_pages=max_pages))
         return {"count": len(items), "regions": items}
 
     @mcp.tool()
@@ -71,10 +68,8 @@ def register(mcp, client: MerchantClient) -> None:
     ) -> dict[str, Any]:
         """Patch a region. update_mask example: 'displayName,postalCodeArea'."""
         before = None
-        try:
+        with contextlib.suppress(Exception):
             before = client.request("GET", f"{base}/{region_id}")
-        except Exception:
-            pass
         params = {"updateMask": update_mask} if update_mask else None
         return client.request(
             "PATCH",
@@ -89,11 +84,7 @@ def register(mcp, client: MerchantClient) -> None:
     def gmc_delete_region(region_id: str) -> dict[str, Any]:
         """Delete a region (and any regional inventories that reference it)."""
         before = None
-        try:
+        with contextlib.suppress(Exception):
             before = client.request("GET", f"{base}/{region_id}")
-        except Exception:
-            pass
-        client.request(
-            "DELETE", f"{base}/{region_id}", op="delete_region", before=before
-        )
+        client.request("DELETE", f"{base}/{region_id}", op="delete_region", before=before)
         return {"deleted_region_id": region_id}

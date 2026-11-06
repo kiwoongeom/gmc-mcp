@@ -108,9 +108,7 @@ def register(mcp, client: MerchantClient) -> None:
                     f"inventories/v1/{acct}/products/{pid}/regionalInventories:insert",
                     json_body={
                         "region": region,
-                        "regionalInventoryAttributes": {
-                            "availability": availability.upper()
-                        },
+                        "regionalInventoryAttributes": {"availability": availability.upper()},
                     },
                     op="bulk_set_availability",
                 )

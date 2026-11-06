@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 from typing import Any
 
 from ..client import MerchantClient
@@ -16,9 +17,7 @@ def register(mcp, client: MerchantClient) -> None:
         Required by Google in the US/EU — without one, products get demoted.
         """
         items = list(
-            client.paginate(
-                "GET", base, items_key="onlineReturnPolicies", max_pages=max_pages
-            )
+            client.paginate("GET", base, items_key="onlineReturnPolicies", max_pages=max_pages)
         )
         return {"count": len(items), "return_policies": items}
 
@@ -53,10 +52,8 @@ def register(mcp, client: MerchantClient) -> None:
     ) -> dict[str, Any]:
         """Patch an existing return policy. update_mask is a comma-separated FieldMask."""
         before = None
-        try:
+        with contextlib.suppress(Exception):
             before = client.request("GET", f"{base}/{policy_id}")
-        except Exception:
-            pass
         params = {"updateMask": update_mask} if update_mask else None
         return client.request(
             "PATCH",
@@ -71,9 +68,7 @@ def register(mcp, client: MerchantClient) -> None:
     def gmc_delete_return_policy(policy_id: str) -> dict[str, Any]:
         """Delete a return policy."""
         before = None
-        try:
+        with contextlib.suppress(Exception):
             before = client.request("GET", f"{base}/{policy_id}")
-        except Exception:
-            pass
         client.request("DELETE", f"{base}/{policy_id}", op="delete_return_policy", before=before)
         return {"deleted": policy_id}

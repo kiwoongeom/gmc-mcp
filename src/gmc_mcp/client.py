@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import random
+import re
 import time
 from collections.abc import Iterator
 from typing import Any
 
 import httpx
 
+from . import __version__
 from ._logging import get_logger
 from .audit import AuditLog
 from .auth import Auth
@@ -28,7 +30,7 @@ class MerchantAPIError(Exception):
 
 
 class MerchantClient:
-    """Thin HTTP wrapper over Merchant API v1beta. Handles auth, retries, paging, audit."""
+    """Thin HTTP wrapper over Merchant API v1. Handles auth, retries, paging, audit."""
 
     def __init__(self, config: Config, auth: Auth, audit: AuditLog):
         self.config = config
@@ -36,7 +38,7 @@ class MerchantClient:
         self.audit = audit
         self._http = httpx.Client(
             timeout=config.timeout,
-            headers={"User-Agent": "gmc-mcp/0.1.0"},
+            headers={"User-Agent": f"gmc-mcp/{__version__}"},
         )
 
     def close(self) -> None:
@@ -63,7 +65,14 @@ class MerchantClient:
     ) -> Any:
         """Perform a single Merchant API request. Returns parsed JSON or {} for 204."""
         url = f"{BASE_URL}/{path.lstrip('/')}"
-        is_write = method.upper() in WRITE_METHODS
+        # Reports search is a read-only query transported over POST. Only exempt
+        # this known endpoint; other POST actions must retain dry-run protection.
+        is_report_read = (
+            method.upper() == "POST"
+            and re.fullmatch(r"reports/v1/accounts/[^/]+/reports:search", path.strip("/"))
+            is not None
+        )
+        is_write = method.upper() in WRITE_METHODS and not is_report_read
 
         if is_write and self.config.dry_run:
             audit_id = self.audit.record(
@@ -173,8 +182,7 @@ class MerchantClient:
         page_count = 0
         while True:
             payload = self.request(method, path, params=params)
-            for item in payload.get(items_key, []) or []:
-                yield item
+            yield from payload.get(items_key, []) or []
             page_count += 1
             token = payload.get("nextPageToken")
             if not token:

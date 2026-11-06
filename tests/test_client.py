@@ -27,13 +27,34 @@ def test_get_attaches_auth_header(client: MerchantClient) -> None:
 @respx.mock
 def test_dry_run_skips_network(client: MerchantClient) -> None:
     client.config.dry_run = True
-    route = respx.post(f"{BASE_URL}/foo/v1/test").mock(
-        return_value=httpx.Response(200, json={})
-    )
+    route = respx.post(f"{BASE_URL}/foo/v1/test").mock(return_value=httpx.Response(200, json={}))
     out = client.request("POST", "foo/v1/test", json_body={"a": 1}, op="test_op")
     assert out["_dry_run"] is True
     assert "audit_id" in out
     assert not route.called
+
+
+@pytest.mark.parametrize(
+    "method,path",
+    [
+        ("POST", "products/v1/accounts/123/productInputs:insert"),
+        ("PATCH", "products/v1/accounts/123/productInputs/item"),
+        ("DELETE", "products/v1/accounts/123/productInputs/item"),
+        ("PUT", "accounts/v1/accounts/123/shippingSettings"),
+        ("POST", "unknown/v1/accounts/123/items:search"),
+        ("DELETE", "reports/v1/accounts/123/reports:search"),
+    ],
+)
+@respx.mock
+def test_dry_run_keeps_writes_blocked(client: MerchantClient, method: str, path: str) -> None:
+    client.config.dry_run = True
+    route = respx.route(method=method, url=f"{BASE_URL}/{path}").mock(
+        return_value=httpx.Response(200, json={})
+    )
+    out = client.request(method, path, json_body={"test": True})
+    assert out["_dry_run"] is True
+    assert not route.called
+    assert client.audit.find(out["audit_id"])["dry_run"] is True
 
 
 @respx.mock
@@ -50,6 +71,7 @@ def test_write_writes_audit_entry(client: MerchantClient) -> None:
     text = client.audit.path.read_text(encoding="utf-8").strip()
     assert text  # not empty
     import json
+
     entry = json.loads(text.splitlines()[-1])
     assert entry["op"] == "insert_x"
     assert entry["response_status"] == 200
@@ -58,9 +80,7 @@ def test_write_writes_audit_entry(client: MerchantClient) -> None:
 
 @respx.mock
 def test_read_does_not_audit(client: MerchantClient) -> None:
-    respx.get(f"{BASE_URL}/foo/v1/x").mock(
-        return_value=httpx.Response(200, json={"name": "ok"})
-    )
+    respx.get(f"{BASE_URL}/foo/v1/x").mock(return_value=httpx.Response(200, json={"name": "ok"}))
     client.request("GET", "foo/v1/x")
     assert not client.audit.path.exists() or client.audit.path.read_text() == ""
 
@@ -107,8 +127,6 @@ def test_paginate_follows_token(client: MerchantClient) -> None:
 @respx.mock
 def test_paginate_respects_max_pages(client: MerchantClient) -> None:
     big = {"items": [{"id": 1}], "nextPageToken": "tok"}
-    respx.get(f"{BASE_URL}/foo/v1/list").mock(
-        return_value=httpx.Response(200, json=big)
-    )
+    respx.get(f"{BASE_URL}/foo/v1/list").mock(return_value=httpx.Response(200, json=big))
     items = list(client.paginate("GET", "foo/v1/list", items_key="items", max_pages=3))
     assert len(items) == 3

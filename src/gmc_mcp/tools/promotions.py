@@ -24,9 +24,7 @@ def register(mcp, client: MerchantClient) -> None:
     @mcp.tool()
     def gmc_get_promotion(promotion_id: str) -> dict[str, Any]:
         """Get a single promotion by ID."""
-        return client.request(
-            "GET", f"promotions/v1/{acct}/promotions/{promotion_id}"
-        )
+        return client.request("GET", f"promotions/v1/{acct}/promotions/{promotion_id}")
 
     @mcp.tool()
     def gmc_insert_promotion(promotion: dict[str, Any], data_source: str) -> dict[str, Any]:

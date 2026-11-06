@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 from typing import Any
 
 from ..client import MerchantClient
@@ -24,9 +25,7 @@ def register(mcp, client: MerchantClient) -> None:
     @mcp.tool()
     def gmc_get_datasource(datasource_id: str) -> dict[str, Any]:
         """Get a single data source by its ID (numeric)."""
-        return client.request(
-            "GET", f"datasources/v1/{acct}/dataSources/{datasource_id}"
-        )
+        return client.request("GET", f"datasources/v1/{acct}/dataSources/{datasource_id}")
 
     @mcp.tool()
     def gmc_create_supplemental_feed(
@@ -88,12 +87,8 @@ def register(mcp, client: MerchantClient) -> None:
     def gmc_delete_datasource(datasource_id: str) -> dict[str, Any]:
         """Delete a data source. Cannot delete a primary feed if products depend on it."""
         before = None
-        try:
-            before = client.request(
-                "GET", f"datasources/v1/{acct}/dataSources/{datasource_id}"
-            )
-        except Exception:
-            pass
+        with contextlib.suppress(Exception):
+            before = client.request("GET", f"datasources/v1/{acct}/dataSources/{datasource_id}")
         client.request(
             "DELETE",
             f"datasources/v1/{acct}/dataSources/{datasource_id}",

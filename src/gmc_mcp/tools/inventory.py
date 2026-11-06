@@ -110,9 +110,7 @@ def register(mcp, client: MerchantClient) -> None:
         )
 
     @mcp.tool()
-    def gmc_list_regional_inventories(
-        product_id: str, max_pages: int = 5
-    ) -> dict[str, Any]:
+    def gmc_list_regional_inventories(product_id: str, max_pages: int = 5) -> dict[str, Any]:
         """List regional inventories for a product."""
         items = list(
             client.paginate(
@@ -125,9 +123,7 @@ def register(mcp, client: MerchantClient) -> None:
         return {"product_id": product_id, "count": len(items), "regional_inventories": items}
 
     @mcp.tool()
-    def gmc_list_local_inventories(
-        product_id: str, max_pages: int = 5
-    ) -> dict[str, Any]:
+    def gmc_list_local_inventories(product_id: str, max_pages: int = 5) -> dict[str, Any]:
         """List local inventories for a product."""
         items = list(
             client.paginate(

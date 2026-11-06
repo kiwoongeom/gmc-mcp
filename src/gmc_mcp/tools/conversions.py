@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 from typing import Any
 
 from ..client import MerchantClient
@@ -52,10 +53,8 @@ def register(mcp, client: MerchantClient) -> None:
         source_id: str, source: dict[str, Any], update_mask: str | None = None
     ) -> dict[str, Any]:
         before = None
-        try:
+        with contextlib.suppress(Exception):
             before = client.request("GET", f"{base}/{source_id}")
-        except Exception:
-            pass
         params = {"updateMask": update_mask} if update_mask else None
         return client.request(
             "PATCH",
@@ -70,10 +69,8 @@ def register(mcp, client: MerchantClient) -> None:
     def gmc_delete_conversion_source(source_id: str) -> dict[str, Any]:
         """Soft-delete a conversion source (recoverable via undelete)."""
         before = None
-        try:
+        with contextlib.suppress(Exception):
             before = client.request("GET", f"{base}/{source_id}")
-        except Exception:
-            pass
         client.request(
             "DELETE", f"{base}/{source_id}", op="delete_conversion_source", before=before
         )

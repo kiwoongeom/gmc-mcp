@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 from typing import Any
 
 from ..client import MerchantClient
@@ -38,9 +39,7 @@ def register(mcp, client: MerchantClient) -> None:
         Product ID format: channel~contentLanguage~feedLabel~offerId
         e.g. online~en~US~SKU123
         """
-        return client.request(
-            "GET", f"products/v1/{acct}/products/{product_id}"
-        )
+        return client.request("GET", f"products/v1/{acct}/products/{product_id}")
 
     @mcp.tool()
     def gmc_insert_product(product: dict[str, Any], data_source: str) -> dict[str, Any]:
@@ -79,10 +78,8 @@ def register(mcp, client: MerchantClient) -> None:
         data_source: full data source name
         """
         before = None
-        try:
+        with contextlib.suppress(Exception):
             before = client.request("GET", f"products/v1/{acct}/products/{product_id}")
-        except Exception:
-            pass
         return client.request(
             "POST",
             f"products/v1/{acct}/productInputs:insert",
@@ -100,10 +97,8 @@ def register(mcp, client: MerchantClient) -> None:
         data_source: data source the product belongs to
         """
         before = None
-        try:
+        with contextlib.suppress(Exception):
             before = client.request("GET", f"products/v1/{acct}/products/{product_id}")
-        except Exception:
-            pass
         client.request(
             "DELETE",
             f"products/v1/{acct}/productInputs/{product_id}",
@@ -141,14 +136,10 @@ def register(mcp, client: MerchantClient) -> None:
         candidates: list[dict[str, Any]] = []
         params: dict[str, Any] = {"pageSize": 250}
         while len(candidates) < max_delete:
-            page = client.request(
-                "GET", f"products/v1/{acct}/products", params=params
-            )
+            page = client.request("GET", f"products/v1/{acct}/products", params=params)
             for p in page.get("products", []) or []:
                 if filter_status:
-                    pv_status = (p.get("productStatus") or {}).get(
-                        "destinationStatuses", []
-                    )
+                    _pv_status = (p.get("productStatus") or {}).get("destinationStatuses", [])
                     # Fall back to a Reports-style filter via productStatus.
                     # Since list-products doesn't include the aggregated status,
                     # we conservatively skip this filter here and rely on caller

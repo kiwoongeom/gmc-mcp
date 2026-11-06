@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 from typing import Any
 
 from ..client import MerchantClient
@@ -42,10 +43,8 @@ def register(mcp, client: MerchantClient) -> None:
         update_mask: comma-separated FieldMask, e.g. 'address,phone'.
         """
         before = None
-        try:
+        with contextlib.suppress(Exception):
             before = client.request("GET", f"accounts/v1/{acct}/businessInfo")
-        except Exception:
-            pass
         params = {"updateMask": update_mask} if update_mask else None
         return client.request(
             "PATCH",
@@ -87,12 +86,8 @@ def register(mcp, client: MerchantClient) -> None:
     def gmc_remove_user(email: str) -> dict[str, Any]:
         """Remove a user from the Merchant Center account."""
         before = None
-        try:
-            before = client.request(
-                "GET", f"accounts/v1/{acct}/users/{email}"
-            )
-        except Exception:
-            pass
+        with contextlib.suppress(Exception):
+            before = client.request("GET", f"accounts/v1/{acct}/users/{email}")
         client.request(
             "DELETE",
             f"accounts/v1/{acct}/users/{email}",
@@ -104,20 +99,14 @@ def register(mcp, client: MerchantClient) -> None:
     @mcp.tool()
     def gmc_get_shipping_settings() -> dict[str, Any]:
         """Get shipping settings (services, rate groups, delivery times)."""
-        return client.request(
-            "GET", f"accounts/v1/{acct}/shippingSettings"
-        )
+        return client.request("GET", f"accounts/v1/{acct}/shippingSettings")
 
     @mcp.tool()
     def gmc_update_shipping_settings(shipping_settings: dict[str, Any]) -> dict[str, Any]:
         """Update shipping settings. Body must be a complete ShippingSettings object."""
         before = None
-        try:
-            before = client.request(
-                "GET", f"accounts/v1/{acct}/shippingSettings"
-            )
-        except Exception:
-            pass
+        with contextlib.suppress(Exception):
+            before = client.request("GET", f"accounts/v1/{acct}/shippingSettings")
         return client.request(
             "POST",
             f"accounts/v1/{acct}/shippingSettings:insert",
@@ -140,9 +129,7 @@ def register(mcp, client: MerchantClient) -> None:
         return {"count": len(items), "programs": items}
 
     @mcp.tool()
-    def gmc_request_program_review(
-        program_id: str, region_code: str = "US"
-    ) -> dict[str, Any]:
+    def gmc_request_program_review(program_id: str, region_code: str = "US") -> dict[str, Any]:
         """Request a manual review of a program after fixing disapproval issues.
 
         program_id: e.g. 'shopping-ads', 'free-listings'.
@@ -161,6 +148,4 @@ def register(mcp, client: MerchantClient) -> None:
     @mcp.tool()
     def gmc_get_program_review(program_id: str) -> dict[str, Any]:
         """Get the current review state of a program (pending/approved/disapproved/etc.)."""
-        return client.request(
-            "GET", f"accounts/v1/{acct}/programs/{program_id}/review"
-        )
+        return client.request("GET", f"accounts/v1/{acct}/programs/{program_id}/review")

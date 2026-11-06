@@ -6,6 +6,7 @@ appear in local search / Maps.
 
 from __future__ import annotations
 
+import contextlib
 from typing import Any
 
 from ..client import MerchantClient
@@ -31,9 +32,7 @@ def register(mcp, client: MerchantClient) -> None:
 
     @mcp.tool()
     def gmc_get_omnichannel_settings(region_code: str) -> dict[str, Any]:
-        return client.request(
-            "GET", f"accounts/v1/{acct}/omnichannelSettings/{region_code}"
-        )
+        return client.request("GET", f"accounts/v1/{acct}/omnichannelSettings/{region_code}")
 
     @mcp.tool()
     def gmc_create_omnichannel_settings(
@@ -65,12 +64,8 @@ def register(mcp, client: MerchantClient) -> None:
         update_mask: str | None = None,
     ) -> dict[str, Any]:
         before = None
-        try:
-            before = client.request(
-                "GET", f"accounts/v1/{acct}/omnichannelSettings/{region_code}"
-            )
-        except Exception:
-            pass
+        with contextlib.suppress(Exception):
+            before = client.request("GET", f"accounts/v1/{acct}/omnichannelSettings/{region_code}")
         params = {"updateMask": update_mask} if update_mask else None
         return client.request(
             "PATCH",

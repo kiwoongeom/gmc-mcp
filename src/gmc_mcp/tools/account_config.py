@@ -3,6 +3,7 @@ autofeed, account tax, email preferences, terms of service."""
 
 from __future__ import annotations
 
+import contextlib
 from typing import Any
 
 from ..client import MerchantClient
@@ -24,17 +25,15 @@ def register(mcp, client: MerchantClient) -> None:
         identity: dict[str, Any], update_mask: str | None = None
     ) -> dict[str, Any]:
         """Patch business identity. Body example:
-            {
-              "blackOwned": {"identityDeclaration": "SELF_IDENTIFIES_AS"},
-              "womenOwned": {"identityDeclaration": "SELF_IDENTIFIES_AS"},
-              "promotionsConsent": "PROMOTIONS_CONSENT_GIVEN_FOR_PROMOTIONS"
-            }
+        {
+          "blackOwned": {"identityDeclaration": "SELF_IDENTIFIES_AS"},
+          "womenOwned": {"identityDeclaration": "SELF_IDENTIFIES_AS"},
+          "promotionsConsent": "PROMOTIONS_CONSENT_GIVEN_FOR_PROMOTIONS"
+        }
         """
         before = None
-        try:
+        with contextlib.suppress(Exception):
             before = client.request("GET", f"accounts/v1/{acct}/businessIdentity")
-        except Exception:
-            pass
         params = {"updateMask": update_mask} if update_mask else None
         return client.request(
             "PATCH",
@@ -87,12 +86,10 @@ def register(mcp, client: MerchantClient) -> None:
     ) -> dict[str, Any]:
         """Patch URI checkout settings (program is always 'checkout' in v1)."""
         before = None
-        try:
+        with contextlib.suppress(Exception):
             before = client.request(
                 "GET", f"accounts/v1/{acct}/programs/{program}/checkoutSettings"
             )
-        except Exception:
-            pass
         params = {"updateMask": update_mask} if update_mask else None
         return client.request(
             "PATCH",
@@ -125,24 +122,22 @@ def register(mcp, client: MerchantClient) -> None:
         improvements: dict[str, Any], update_mask: str | None = None
     ) -> dict[str, Any]:
         """Toggle automatic improvements. Body example:
-            {
-              "itemUpdates": {"accountItemUpdatesSettings": {
-                "allowPriceUpdates": True,
-                "allowAvailabilityUpdates": True,
-                "allowConditionUpdates": True,
-                "allowStrictAvailabilityUpdates": True
-              }},
-              "imageImprovements": {"accountImageImprovementsSettings": {
-                "allowAutomaticImageImprovements": True
-              }},
-              "shippingImprovements": {"allowShippingImprovements": True}
-            }
+        {
+          "itemUpdates": {"accountItemUpdatesSettings": {
+            "allowPriceUpdates": True,
+            "allowAvailabilityUpdates": True,
+            "allowConditionUpdates": True,
+            "allowStrictAvailabilityUpdates": True
+          }},
+          "imageImprovements": {"accountImageImprovementsSettings": {
+            "allowAutomaticImageImprovements": True
+          }},
+          "shippingImprovements": {"allowShippingImprovements": True}
+        }
         """
         before = None
-        try:
+        with contextlib.suppress(Exception):
             before = client.request("GET", f"accounts/v1/{acct}/automaticImprovements")
-        except Exception:
-            pass
         params = {"updateMask": update_mask} if update_mask else None
         return client.request(
             "PATCH",
@@ -166,10 +161,8 @@ def register(mcp, client: MerchantClient) -> None:
     ) -> dict[str, Any]:
         """Enable / disable autofeed product crawling."""
         before = None
-        try:
+        with contextlib.suppress(Exception):
             before = client.request("GET", f"accounts/v1/{acct}/autofeedSettings")
-        except Exception:
-            pass
         return client.request(
             "PATCH",
             f"accounts/v1/{acct}/autofeedSettings",
@@ -191,16 +184,14 @@ def register(mcp, client: MerchantClient) -> None:
         tax_rules: list[dict[str, Any]], update_mask: str = "taxRules"
     ) -> dict[str, Any]:
         """Update US tax rules. Body example:
-            [
-              {"region": "US-CA", "useGoogleRate": True, "shippingTaxed": False},
-              {"region": "US-NY", "ratePercent": 8.0, "shippingTaxed": True}
-            ]
+        [
+          {"region": "US-CA", "useGoogleRate": True, "shippingTaxed": False},
+          {"region": "US-NY", "ratePercent": 8.0, "shippingTaxed": True}
+        ]
         """
         before = None
-        try:
+        with contextlib.suppress(Exception):
             before = client.request("GET", f"accounts/v1/{acct}/accountTax")
-        except Exception:
-            pass
         return client.request(
             "PATCH",
             f"accounts/v1/{acct}/accountTax",
@@ -216,24 +207,18 @@ def register(mcp, client: MerchantClient) -> None:
     def gmc_get_email_preferences(email: str) -> dict[str, Any]:
         """Get email-notification preferences for a user.
         email: the user's email exactly as it appears in Account Access."""
-        return client.request(
-            "GET", f"accounts/v1/{acct}/users/{email}/emailPreferences"
-        )
+        return client.request("GET", f"accounts/v1/{acct}/users/{email}/emailPreferences")
 
     @mcp.tool()
     def gmc_update_email_preferences(
         email: str, preferences: dict[str, Any], update_mask: str | None = None
     ) -> dict[str, Any]:
         """Update email preferences. preferences example:
-            {"newsAndTips": "OPTED_IN"}  # or OPTED_OUT
+        {"newsAndTips": "OPTED_IN"}  # or OPTED_OUT
         """
         before = None
-        try:
-            before = client.request(
-                "GET", f"accounts/v1/{acct}/users/{email}/emailPreferences"
-            )
-        except Exception:
-            pass
+        with contextlib.suppress(Exception):
+            before = client.request("GET", f"accounts/v1/{acct}/users/{email}/emailPreferences")
         params = {"updateMask": update_mask} if update_mask else None
         return client.request(
             "PATCH",
@@ -247,14 +232,16 @@ def register(mcp, client: MerchantClient) -> None:
     # ---------------- Terms of Service ----------------
 
     @mcp.tool()
-    def gmc_get_latest_tos(region_code: str = "US", kind: str = "MERCHANT_CENTER") -> dict[str, Any]:
+    def gmc_get_latest_tos(
+        region_code: str = "US", kind: str = "MERCHANT_CENTER"
+    ) -> dict[str, Any]:
         """Retrieve the latest TermsOfService document.
 
         kind: 'MERCHANT_CENTER' (default).
         """
         return client.request(
             "GET",
-            f"termsOfService/v1/termsOfService:retrieveLatest",
+            "termsOfService/v1/termsOfService:retrieveLatest",
             params={"regionCode": region_code, "kind": kind},
         )
 

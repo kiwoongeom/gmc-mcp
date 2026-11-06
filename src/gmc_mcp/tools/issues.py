@@ -31,9 +31,7 @@ def register(mcp, client: MerchantClient) -> None:
 
         product_id: full product ID (channel~lang~feedLabel~offerId)
         """
-        product = client.request(
-            "GET", f"products/v1/{acct}/products/{product_id}"
-        )
+        product = client.request("GET", f"products/v1/{acct}/products/{product_id}")
         return {
             "product_id": product_id,
             "title": (product.get("productAttributes") or {}).get("title"),

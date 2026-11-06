@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 import click
 
@@ -128,10 +129,7 @@ def auth_init(secrets_path: Path, output_path: Path, port: int) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(creds.to_json(), encoding="utf-8")
     click.echo(f"Saved token to {output_path}")
-    click.echo(
-        "Set this in your .env: "
-        f"GMC_OAUTH_TOKEN={output_path.resolve()}"
-    )
+    click.echo(f"Set this in your .env: GMC_OAUTH_TOKEN={output_path.resolve()}")
 
 
 @cli.command()
@@ -160,7 +158,7 @@ def webhook(host: str, port: int, out_path: Path | None) -> None:
     log = get_logger("webhook")
 
     class Handler(BaseHTTPRequestHandler):
-        def do_POST(self) -> None:  # noqa: N802
+        def do_POST(self) -> None:
             length = int(self.headers.get("Content-Length", "0"))
             raw = self.rfile.read(length) if length else b""
             try:
@@ -255,7 +253,9 @@ def describe(ctx: click.Context) -> None:
         "version": __version__,
         "account_id": config.account_id,
         "subaccount_id": config.subaccount_id,
-        "service_account_key": str(config.service_account_key) if config.service_account_key else None,
+        "service_account_key": str(config.service_account_key)
+        if config.service_account_key
+        else None,
         "oauth_token": str(config.oauth_token) if config.oauth_token else None,
         "audit_log": str(config.audit_log),
         "dry_run": config.dry_run,

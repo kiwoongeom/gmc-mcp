@@ -45,9 +45,8 @@ class AuditLog:
             "error": error,
         }
         line = json.dumps(entry, ensure_ascii=False, default=str)
-        with self._lock:
-            with self.path.open("a", encoding="utf-8") as f:
-                f.write(line + "\n")
+        with self._lock, self.path.open("a", encoding="utf-8") as f:
+            f.write(line + "\n")
         return audit_id
 
     def find(self, audit_id: str) -> dict[str, Any] | None:

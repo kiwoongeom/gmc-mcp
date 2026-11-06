@@ -31,9 +31,9 @@ def _build(module, client: MerchantClient) -> dict:
 
 @respx.mock
 def test_return_policies_list(client: MerchantClient) -> None:
-    respx.get(
-        f"{BASE_URL}/accounts/v1/accounts/1234567890/onlineReturnPolicies"
-    ).mock(return_value=httpx.Response(200, json={"onlineReturnPolicies": [{"name": "x"}]}))
+    respx.get(f"{BASE_URL}/accounts/v1/accounts/1234567890/onlineReturnPolicies").mock(
+        return_value=httpx.Response(200, json={"onlineReturnPolicies": [{"name": "x"}]})
+    )
     fns = _build(return_policies, client)
     out = fns["gmc_list_return_policies"]()
     assert out["count"] == 1
@@ -41,9 +41,9 @@ def test_return_policies_list(client: MerchantClient) -> None:
 
 @respx.mock
 def test_homepage_claim(client: MerchantClient) -> None:
-    respx.post(
-        f"{BASE_URL}/accounts/v1/accounts/1234567890/homepage:claim"
-    ).mock(return_value=httpx.Response(200, json={"claimed": True}))
+    respx.post(f"{BASE_URL}/accounts/v1/accounts/1234567890/homepage:claim").mock(
+        return_value=httpx.Response(200, json={"claimed": True})
+    )
     fns = _build(homepage, client)
     out = fns["gmc_claim_homepage"](overwrite=True)
     assert out == {"claimed": True}
@@ -51,9 +51,9 @@ def test_homepage_claim(client: MerchantClient) -> None:
 
 @respx.mock
 def test_account_config_get_automatic_improvements(client: MerchantClient) -> None:
-    respx.get(
-        f"{BASE_URL}/accounts/v1/accounts/1234567890/automaticImprovements"
-    ).mock(return_value=httpx.Response(200, json={"itemUpdates": {}}))
+    respx.get(f"{BASE_URL}/accounts/v1/accounts/1234567890/automaticImprovements").mock(
+        return_value=httpx.Response(200, json={"itemUpdates": {}})
+    )
     fns = _build(account_config, client)
     out = fns["gmc_get_automatic_improvements"]()
     assert "itemUpdates" in out
@@ -61,18 +61,16 @@ def test_account_config_get_automatic_improvements(client: MerchantClient) -> No
 
 @respx.mock
 def test_account_config_get_business_identity(client: MerchantClient) -> None:
-    respx.get(
-        f"{BASE_URL}/accounts/v1/accounts/1234567890/businessIdentity"
-    ).mock(return_value=httpx.Response(200, json={"name": "x"}))
+    respx.get(f"{BASE_URL}/accounts/v1/accounts/1234567890/businessIdentity").mock(
+        return_value=httpx.Response(200, json={"name": "x"})
+    )
     fns = _build(account_config, client)
     assert fns["gmc_get_business_identity"]()["name"] == "x"
 
 
 @respx.mock
 def test_quotas_list(client: MerchantClient) -> None:
-    respx.get(
-        f"{BASE_URL}/quota/v1/accounts/1234567890/quotas"
-    ).mock(
+    respx.get(f"{BASE_URL}/quota/v1/accounts/1234567890/quotas").mock(
         return_value=httpx.Response(
             200,
             json={"quotaGroups": [{"quotaUsage": "10", "quotaLimit": "1000"}]},
@@ -85,36 +83,36 @@ def test_quotas_list(client: MerchantClient) -> None:
 
 @respx.mock
 def test_reviews_list_merchant(client: MerchantClient) -> None:
-    respx.get(
-        f"{BASE_URL}/accounts/v1/accounts/1234567890/merchantReviews"
-    ).mock(return_value=httpx.Response(200, json={"merchantReviews": [{"id": "1"}]}))
+    respx.get(f"{BASE_URL}/accounts/v1/accounts/1234567890/merchantReviews").mock(
+        return_value=httpx.Response(200, json={"merchantReviews": [{"id": "1"}]})
+    )
     fns = _build(reviews, client)
     assert fns["gmc_list_merchant_reviews"]()["count"] == 1
 
 
 @respx.mock
 def test_conversions_list(client: MerchantClient) -> None:
-    respx.get(
-        f"{BASE_URL}/conversions/v1/accounts/1234567890/conversionSources"
-    ).mock(return_value=httpx.Response(200, json={"conversionSources": []}))
+    respx.get(f"{BASE_URL}/conversions/v1/accounts/1234567890/conversionSources").mock(
+        return_value=httpx.Response(200, json={"conversionSources": []})
+    )
     fns = _build(conversions, client)
     assert fns["gmc_list_conversion_sources"]()["count"] == 0
 
 
 @respx.mock
 def test_omnichannel_list(client: MerchantClient) -> None:
-    respx.get(
-        f"{BASE_URL}/accounts/v1/accounts/1234567890/omnichannelSettings"
-    ).mock(return_value=httpx.Response(200, json={"omnichannelSettings": []}))
+    respx.get(f"{BASE_URL}/accounts/v1/accounts/1234567890/omnichannelSettings").mock(
+        return_value=httpx.Response(200, json={"omnichannelSettings": []})
+    )
     fns = _build(omnichannel, client)
     assert fns["gmc_list_omnichannel_settings"]()["count"] == 0
 
 
 @respx.mock
 def test_lfp_get_merchant_state(client: MerchantClient) -> None:
-    respx.get(
-        f"{BASE_URL}/lfp/v1/accounts/1234567890/lfpMerchantStates/9999"
-    ).mock(return_value=httpx.Response(200, json={"linkedGbpShortCode": "LCO123"}))
+    respx.get(f"{BASE_URL}/lfp/v1/accounts/1234567890/lfpMerchantStates/9999").mock(
+        return_value=httpx.Response(200, json={"linkedGbpShortCode": "LCO123"})
+    )
     fns = _build(lfp, client)
     out = fns["gmc_lfp_get_merchant_state"](target_account="9999")
     assert out["linkedGbpShortCode"] == "LCO123"
@@ -122,9 +120,9 @@ def test_lfp_get_merchant_state(client: MerchantClient) -> None:
 
 @respx.mock
 def test_mca_list_relationships(client: MerchantClient) -> None:
-    respx.get(
-        f"{BASE_URL}/accounts/v1/accounts/1234567890/accountRelationships"
-    ).mock(return_value=httpx.Response(200, json={"accountRelationships": []}))
+    respx.get(f"{BASE_URL}/accounts/v1/accounts/1234567890/accountRelationships").mock(
+        return_value=httpx.Response(200, json={"accountRelationships": []})
+    )
     fns = _build(mca, client)
     assert fns["gmc_list_relationships"]()["count"] == 0
 
@@ -170,9 +168,9 @@ def test_diagnostics_health_check(client: MerchantClient) -> None:
     respx.get(f"{BASE_URL}/accounts/v1/accounts/1234567890/homepage").mock(
         return_value=httpx.Response(200, json={})
     )
-    respx.get(
-        f"{BASE_URL}/accounts/v1/accounts/1234567890/automaticImprovements"
-    ).mock(return_value=httpx.Response(200, json={}))
+    respx.get(f"{BASE_URL}/accounts/v1/accounts/1234567890/automaticImprovements").mock(
+        return_value=httpx.Response(200, json={})
+    )
     fns = _build(diagnostics, client)
     out = fns["gmc_health_check"]()
     assert out["ok"] == 7

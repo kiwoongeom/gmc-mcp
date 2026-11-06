@@ -16,9 +16,7 @@ def _build(client: MerchantClient) -> dict:
 
 @respx.mock
 def test_list_account_issues(client: MerchantClient) -> None:
-    respx.get(
-        f"{BASE_URL}/accounts/v1/accounts/1234567890/issues"
-    ).mock(
+    respx.get(f"{BASE_URL}/accounts/v1/accounts/1234567890/issues").mock(
         return_value=httpx.Response(
             200,
             json={
@@ -37,9 +35,7 @@ def test_list_account_issues(client: MerchantClient) -> None:
 @respx.mock
 def test_summarize_product_issues(client: MerchantClient) -> None:
     """v1 itemIssues schema: type.code, severity.aggregatedSeverity, resolution."""
-    respx.post(
-        f"{BASE_URL}/reports/v1/accounts/1234567890/reports:search"
-    ).mock(
+    respx.post(f"{BASE_URL}/reports/v1/accounts/1234567890/reports:search").mock(
         return_value=httpx.Response(
             200,
             json={

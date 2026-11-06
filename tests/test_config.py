@@ -73,9 +73,7 @@ def test_non_numeric_account_raises(
         load_config(env_file=empty_env)
 
 
-def test_no_credentials_raises(
-    empty_env: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_no_credentials_raises(empty_env: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("GMC_ACCOUNT_ID", "1234567890")
     monkeypatch.delenv("GMC_SERVICE_ACCOUNT_KEY", raising=False)
     monkeypatch.delenv("GMC_OAUTH_TOKEN", raising=False)
@@ -93,9 +91,7 @@ def test_invalid_transport(
         load_config(env_file=empty_env)
 
 
-def test_truthy_dry_run(
-    tmp_path: Path, empty_env: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_truthy_dry_run(tmp_path: Path, empty_env: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     sa = tmp_path / "sa.json"
     sa.write_text("{}")
     for value in ("true", "TRUE", "1", "yes", "on"):

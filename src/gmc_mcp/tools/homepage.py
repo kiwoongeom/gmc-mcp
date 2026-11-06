@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 from typing import Any
 
 from ..client import MerchantClient
@@ -18,10 +19,8 @@ def register(mcp, client: MerchantClient) -> None:
     def gmc_update_homepage(uri: str, update_mask: str = "uri") -> dict[str, Any]:
         """Update the homepage URI. update_mask defaults to 'uri'."""
         before = None
-        try:
+        with contextlib.suppress(Exception):
             before = client.request("GET", base)
-        except Exception:
-            pass
         return client.request(
             "PATCH",
             base,

@@ -5,6 +5,7 @@ under one parent."""
 
 from __future__ import annotations
 
+import contextlib
 from typing import Any
 
 from ..client import MerchantClient
@@ -30,9 +31,7 @@ def register(mcp, client: MerchantClient) -> None:
 
     @mcp.tool()
     def gmc_get_relationship(relationship_id: str) -> dict[str, Any]:
-        return client.request(
-            "GET", f"accounts/v1/{acct}/accountRelationships/{relationship_id}"
-        )
+        return client.request("GET", f"accounts/v1/{acct}/accountRelationships/{relationship_id}")
 
     @mcp.tool()
     def gmc_update_relationship(
@@ -41,12 +40,10 @@ def register(mcp, client: MerchantClient) -> None:
         update_mask: str | None = None,
     ) -> dict[str, Any]:
         before = None
-        try:
+        with contextlib.suppress(Exception):
             before = client.request(
                 "GET", f"accounts/v1/{acct}/accountRelationships/{relationship_id}"
             )
-        except Exception:
-            pass
         params = {"updateMask": update_mask} if update_mask else None
         return client.request(
             "PATCH",
@@ -98,9 +95,7 @@ def register(mcp, client: MerchantClient) -> None:
         return {"count": len(items), "services": items}
 
     @mcp.tool()
-    def gmc_propose_account_service(
-        provider: str, service_type: str
-    ) -> dict[str, Any]:
+    def gmc_propose_account_service(provider: str, service_type: str) -> dict[str, Any]:
         """Propose a service relationship (e.g. account management delegation).
 
         provider: full account name like 'accounts/PROVIDER_ID'.

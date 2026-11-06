@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.6] - 2026-11-05
+
+### Fixed
+- Allow read-only Reports API POST queries through dry-run mode. Report tools
+  return actual rows and propagate API errors instead of silently returning zero
+  results (#1, #2). Other POST actions and all PUT/PATCH/DELETE requests remain
+  intercepted and audited in dry-run mode.
+- Bound the MCP SDK dependency to `mcp>=1.2.0,<2`, matching the FastMCP v1 API
+  used by this server and preventing startup failures with MCP 2.x (#4).
+- Use the package version in the Merchant API User-Agent header.
+- Fix missing CLI type imports and clean up existing lint/format violations so
+  the release passes the repository's CI checks.
+
+### Tests
+- Cover report pagination and HTTP 400/403/503 errors under dry-run, plus
+  continued write interception and auditing.
+
 ## [0.2.5] - 2026-05-02
 
 ### Changed — positioning corrected (second time)

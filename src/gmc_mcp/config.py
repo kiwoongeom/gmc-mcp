@@ -58,9 +58,7 @@ def load_config(env_file: Path | None = None) -> Config:
             "  - Add it to .env: GMC_ACCOUNT_ID=1234567890"
         )
     if not account_id.isdigit():
-        raise RuntimeError(
-            f"GMC_ACCOUNT_ID must be numeric, got '{account_id}'."
-        )
+        raise RuntimeError(f"GMC_ACCOUNT_ID must be numeric, got '{account_id}'.")
 
     sa_key = _path_or_none(os.environ.get("GMC_SERVICE_ACCOUNT_KEY"))
     oauth_token = _path_or_none(os.environ.get("GMC_OAUTH_TOKEN"))
@@ -83,19 +81,13 @@ def load_config(env_file: Path | None = None) -> Config:
     if subaccount and not subaccount.isdigit():
         raise RuntimeError(f"GMC_SUBACCOUNT_ID must be numeric, got '{subaccount}'.")
 
-    default_audit = (
-        Path(__file__).resolve().parent.parent.parent / "logs" / DEFAULT_AUDIT_LOG_NAME
-    )
-    audit_path = (
-        _path_or_none(os.environ.get("GMC_AUDIT_LOG")) or default_audit
-    )
+    default_audit = Path(__file__).resolve().parent.parent.parent / "logs" / DEFAULT_AUDIT_LOG_NAME
+    audit_path = _path_or_none(os.environ.get("GMC_AUDIT_LOG")) or default_audit
     audit_path.parent.mkdir(parents=True, exist_ok=True)
 
     transport = os.environ.get("GMC_TRANSPORT", "stdio").strip().lower()
     if transport not in {"stdio", "sse"}:
-        raise RuntimeError(
-            f"GMC_TRANSPORT must be 'stdio' or 'sse', got '{transport}'."
-        )
+        raise RuntimeError(f"GMC_TRANSPORT must be 'stdio' or 'sse', got '{transport}'.")
 
     try:
         page_size = int(os.environ.get("GMC_PAGE_SIZE", "100"))

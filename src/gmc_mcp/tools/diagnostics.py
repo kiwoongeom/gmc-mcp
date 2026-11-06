@@ -5,7 +5,6 @@ from __future__ import annotations
 import csv
 import json
 import time
-from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
@@ -34,7 +33,12 @@ def register(mcp, client: MerchantClient) -> None:
                 checks.append({"check": name, "ok": True, "ms": int((time.time() - t0) * 1000)})
             except Exception as e:
                 checks.append(
-                    {"check": name, "ok": False, "ms": int((time.time() - t0) * 1000), "error": str(e)[:200]}
+                    {
+                        "check": name,
+                        "ok": False,
+                        "ms": int((time.time() - t0) * 1000),
+                        "error": str(e)[:200],
+                    }
                 )
 
         probe("account", "GET", f"accounts/v1/{acct}")
@@ -73,7 +77,7 @@ def register(mcp, client: MerchantClient) -> None:
         before = entry.get("before")
         if not before:
             return {
-                "error": f"Audit entry has no `before` snapshot — cannot rollback.",
+                "error": "Audit entry has no `before` snapshot — cannot rollback.",
                 "op": entry.get("op"),
             }
         op = entry.get("op", "")
@@ -104,9 +108,7 @@ def register(mcp, client: MerchantClient) -> None:
         if op.startswith("update_") and method == "PATCH":
             # Re-PATCH with the before snapshot
             relative = url.split("merchantapi.googleapis.com/")[-1]
-            return client.request(
-                "PATCH", relative, json_body=before, op=f"rollback_{op}"
-            )
+            return client.request("PATCH", relative, json_body=before, op=f"rollback_{op}")
 
         return {
             "error": f"Don't know how to rollback op={op}. before snapshot: {json.dumps(before)[:300]}"

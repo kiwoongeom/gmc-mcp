@@ -201,6 +201,10 @@ docker run --rm -p 8000:8000 \
 
 ## Audit log + rollback
 
+`GMC_DRY_RUN=true` blocks writes, but still sends read requests, including the
+read-only Reports API `POST reports:search`. Report tools return real data;
+Merchant API errors are surfaced to the caller rather than reported as zero rows.
+
 Every write logs a JSONL entry to `GMC_AUDIT_LOG` (default: `./logs/audit.jsonl`). Each entry contains:
 
 - `audit_id` — UUID for lookup

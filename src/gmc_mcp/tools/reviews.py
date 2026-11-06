@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from typing import Any
 
 from ..client import MerchantClient
@@ -18,9 +19,7 @@ def register(mcp, client: MerchantClient) -> None:
     def gmc_list_merchant_reviews(max_pages: int = 5) -> dict[str, Any]:
         """List merchant (store) reviews — used for Trusted Stores / star ratings."""
         items = list(
-            client.paginate(
-                "GET", mr_base, items_key="merchantReviews", max_pages=max_pages
-            )
+            client.paginate("GET", mr_base, items_key="merchantReviews", max_pages=max_pages)
         )
         return {"count": len(items), "reviews": items}
 
@@ -29,9 +28,7 @@ def register(mcp, client: MerchantClient) -> None:
         return client.request("GET", f"{mr_base}/{review_id}")
 
     @mcp.tool()
-    def gmc_insert_merchant_review(
-        review: dict[str, Any], data_source: str
-    ) -> dict[str, Any]:
+    def gmc_insert_merchant_review(review: dict[str, Any], data_source: str) -> dict[str, Any]:
         """Insert / upsert a merchant review.
 
         review: full MerchantReview body (merchantReviewId, attributes, etc.)
@@ -48,10 +45,8 @@ def register(mcp, client: MerchantClient) -> None:
     @mcp.tool()
     def gmc_delete_merchant_review(review_id: str) -> dict[str, Any]:
         before = None
-        try:
+        with contextlib.suppress(Exception):
             before = client.request("GET", f"{mr_base}/{review_id}")
-        except Exception:
-            pass
         client.request(
             "DELETE", f"{mr_base}/{review_id}", op="delete_merchant_review", before=before
         )
@@ -63,9 +58,7 @@ def register(mcp, client: MerchantClient) -> None:
     def gmc_list_product_reviews(max_pages: int = 10) -> dict[str, Any]:
         """List product reviews."""
         items = list(
-            client.paginate(
-                "GET", pr_base, items_key="productReviews", max_pages=max_pages
-            )
+            client.paginate("GET", pr_base, items_key="productReviews", max_pages=max_pages)
         )
         return {"count": len(items), "reviews": items}
 
@@ -74,9 +67,7 @@ def register(mcp, client: MerchantClient) -> None:
         return client.request("GET", f"{pr_base}/{review_id}")
 
     @mcp.tool()
-    def gmc_insert_product_review(
-        review: dict[str, Any], data_source: str
-    ) -> dict[str, Any]:
+    def gmc_insert_product_review(review: dict[str, Any], data_source: str) -> dict[str, Any]:
         """Insert / upsert a product review."""
         return client.request(
             "POST",
@@ -89,10 +80,8 @@ def register(mcp, client: MerchantClient) -> None:
     @mcp.tool()
     def gmc_delete_product_review(review_id: str) -> dict[str, Any]:
         before = None
-        try:
+        with contextlib.suppress(Exception):
             before = client.request("GET", f"{pr_base}/{review_id}")
-        except Exception:
-            pass
         client.request(
             "DELETE", f"{pr_base}/{review_id}", op="delete_product_review", before=before
         )
