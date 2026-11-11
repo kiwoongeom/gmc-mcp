@@ -17,8 +17,10 @@
 > Inspect product issues, query Shopping reports, update inventory, and manage
 > account operations with **126 tools** in one self-hosted Python package.
 
-`gmc-mcp` is MIT-licensed and available on PyPI. Run it locally or on your own
-server, using your own Google credentials. No hosted connector is required.
+`gmc-mcp` is MIT-licensed and available as
+[Google Merchant Center MCP (GMC MCP) on PyPI](https://pypi.org/project/gmc-mcp/).
+Run it locally or on your own server, using your own Google credentials.
+No hosted connector is required.
 
 ## What you can do
 
@@ -101,6 +103,10 @@ were not executed against the live account during release verification.
 CLI also exposes: `gmc-mcp run`, `auth-init`, `register-gcp`, `webhook`, `describe`, `version`.
 
 ## Install
+
+Get the Python package and release files from
+[Google Merchant Center MCP (GMC MCP) on PyPI](https://pypi.org/project/gmc-mcp/).
+This permanent package URL always points to the latest published release.
 
 ```bash
 pip install gmc-mcp
