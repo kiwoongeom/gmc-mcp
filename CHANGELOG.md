@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.7] - 2026-11-11
+
+### Documentation
+- Lead the GitHub and PyPI introduction with product workflows, inventory,
+  feed diagnostics, reports, authentication, dry-run, auditing and supported rollback.
+- State the verified startup, tool registration, regression-test and live-read
+  coverage explicitly, without claiming every tool has been live-tested.
+- Keep Google Merchant Center MCP and GMC MCP search keywords and move the
+  unchanged, scoped earliest-identified-release finding to a historical section.
+- Refresh package and registry descriptions. Runtime behavior and the 0.2.6
+  compatibility and Reports fixes are unchanged.
+
 ## [0.2.6] - 2026-11-05
 
 ### Fixed

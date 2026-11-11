@@ -1,6 +1,6 @@
 <!-- mcp-name: io.github.kiwoongeom/gmc-mcp -->
 
-# Google Merchant Center MCP (`gmc-mcp`)
+# Google Merchant Center MCP (GMC MCP)
 
 [![PyPI](https://img.shields.io/pypi/v/gmc-mcp.svg)](https://pypi.org/project/gmc-mcp/)
 [![Downloads](https://static.pepy.tech/badge/gmc-mcp)](https://pepy.tech/projects/gmc-mcp)
@@ -11,82 +11,68 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-> **Google Merchant Center MCP (GMC MCP), built on Merchant API v1.**
-> 126 tools, MIT-licensed, `pip install`-able. Drive your Google Shopping
-> feed, products, inventory, Reports, promotions, returns, and account
-> configuration in natural language from Claude Desktop, Claude Code, or any
-> MCP-compatible client.
->
-> ### Where this fits in the GMC + MCP landscape
->
-> | Option | Type | API | License | Install | Tools |
-> |---|---|---|---|---|---|
-> | Adzviser / Catchr / Windsor.ai / Pipedream | Paid hosted SaaS | varies | proprietary | sign-up | varies |
-> | [archpeng/GMC-mcp-server](https://github.com/archpeng/GMC-mcp-server) | Self-hosted | **Content API v2.1** (deprecated 2026-08) | none declared | git clone | 34 |
-> | **`gmc-mcp` (this package)** | **Self-hosted** | **Merchant API v1** (future-proof) | **MIT** | **`pip install gmc-mcp`** | **126** |
->
-> Pick this if you want: future-proof API, an actual OSS license, PyPI install,
-> a larger toolset, audit log + rollback + dry-run safety, and credentials that
-> never leave your machine.
+> **Manage Google Merchant Center from your AI assistant.**
+> Google Merchant Center MCP (GMC MCP) connects Claude Desktop, Claude Code,
+> and other MCP-compatible clients directly to Google's Merchant API v1.
+> Inspect product issues, query Shopping reports, update inventory, and manage
+> account operations with **126 tools** in one self-hosted Python package.
 
-## Earliest identified PyPI release — scope and evidence
+`gmc-mcp` is MIT-licensed and available on PyPI. Run it locally or on your own
+server, using your own Google credentials. No hosted connector is required.
 
-In our **2026-11-11 public-record review**, `gmc-mcp` was the **earliest
-identified Google Merchant Center MCP (GMC MCP) distribution** meeting all
-three conditions together: **Merchant API v1**, **MIT license**, and
-**publication on PyPI**.
+## What you can do
 
-- The first PyPI file for `gmc-mcp` 0.2.0 was uploaded on
-  **2026-05-02 at 18:06:53 UTC**. Its wheel declares MIT and uses Merchant API
-  v1 endpoints. See the [release](https://pypi.org/project/gmc-mcp/0.2.0/)
-  and [PyPI upload metadata](https://pypi.org/pypi/gmc-mcp/0.2.0/json).
-- Earlier GMC MCP projects existed. For example,
-  [Webloom's May 1 source](https://github.com/webloom-agency/merchant-center-mcp/tree/b2578bde8fe7c0bea4330911536c65b4d2079988)
-  already used Merchant API v1 and MIT. We found no earlier PyPI release for
-  its declared package name, `mcp-google-merchant`; that name returned HTTP
-  404 during the review.
-- The review covered web/GitHub searches, historical source and package
-  metadata, and current PyPI names containing `mcp` plus `merchant` or `gmc`.
-  It cannot rule out deleted distributions, other package names, or
-  unindexed projects. This is a **scoped historical finding**, not proof of
-  worldwide priority or a No. 1 quality, popularity, or performance ranking.
+| Workflow | Capabilities |
+|---|---|
+| Product catalog | List, inspect, insert, update, and delete products; manage product inputs and data sources. |
+| Feed diagnostics | Find disapproved products, summarize product issues, and inspect account and feed status. |
+| Shopping reports | Query Merchant Center reports and inspect product performance, price benchmarks, and best sellers where the account is eligible. |
+| Inventory and bulk operations | Update regional/local inventory, prices, and availability across products. |
+| Account operations | Manage promotions, returns, shipping settings, users, regions, and other Merchant Center settings. |
+| Auditing and recovery | Record writes in a local JSONL audit log and roll back supported operations when a prior snapshot is available. |
 
-Built on **Merchant API v1** (replaces Content API for Shopping; v1beta was
-discontinued 2026-02-28). Safe by default: every write is recorded to an
-append-only audit log with `before` snapshots, dry-run is one toggle away, and
-destructive bulk operations require an explicit `confirm` parameter.
+## Built for day-to-day operations
 
-## Why this exists
+- **Direct Merchant API v1 access.** Use your own Merchant Center account;
+  Google permissions and report eligibility apply to each operation.
+- **Dry-run before making changes.** Enable `GMC_DRY_RUN=true` to intercept
+  and audit writes while product reads and read-only Reports queries still
+  reach Google. Destructive bulk operations require explicit confirmation.
+- **An audit trail you control.** Inspect request outcomes and captured
+  `before` snapshots. Rollback is available for supported changes with the
+  required snapshot; it is not a universal undo for every API action.
+- **Flexible authentication and clients.** Service-account or OAuth user
+  credentials, stdio for desktop clients, and SSE for self-hosted deployments.
+- **Standard Python distribution.** Install with `pip install gmc-mcp` or run
+  with `uvx gmc-mcp run`; Python 3.10+ and an MIT license.
 
-Google Merchant Center (GMC) powers Google Shopping listings, Free Listings,
-Shopping Ads, Buy on Google checkout, YouTube Shopping, and more. Managing a
-feed of thousands of products through the GMC web UI is tedious, and writing
-one-off Python scripts against the Merchant API REST endpoints is slow.
+## Verified operation
 
-There are existing MCP services for GMC, but they fit different niches:
+The release verification covers the installed package, MCP startup and tool
+registration, and live read-only Google Merchant API requests:
 
-- **Paid hosted SaaS** (Adzviser, Catchr, Windsor.ai, Pipedream) — your data
-  is proxied through their servers; monthly subscription.
-- **`archpeng/GMC-mcp-server`** — an earlier self-hosted Python project (Feb 2026),
-  but built on the deprecated **Content API v2.1** which Google retires in
-  **August 2026**, has no license declared, and isn't on PyPI.
+- **MCP stdio initialization and all 126 tools registered.**
+- **Live product listing and Reports queries succeeded**, including a Reports
+  query with dry-run enabled that returned real account data.
+- **53 offline regression tests passed**, covering pagination, API error
+  propagation, auditing, and continued interception of writes in dry-run mode.
+- **CI checks on Linux, Windows, and macOS**, across Python 3.10–3.13, with
+  Ruff lint/format checks and mypy type checking.
 
-`gmc-mcp` was built to fill the gap: a self-hosted package on the **new
-Merchant API v1**, MIT-licensed, on **PyPI**, with audit/rollback/dry-run
-safety and 126 tools across 19 modules.
+The live checks exercise product listing and report queries. They do not
+constitute live validation of every tool or permission combination. Writes
+were not executed against the live account during release verification.
 
-The package gives Claude (or any MCP client) **126 tools** that map directly
-onto the Merchant API v1 surface, so you can do things like:
+## Example requests
 
-- *"Show me every disapproved product, grouped by issue code."*
-- *"Bump US prices 5% on these 40 SKUs."*
-- *"Which products had impressions but zero clicks last week?"*
-- *"Roll back audit ID 8fc8dc42… — that update broke something."*
-- *"Compare this Shopify CSV against my GMC feed; what's missing?"*
+- "Show me every disapproved product, grouped by issue code."
+- "Which products had impressions but zero clicks last week?"
+- "Enable dry-run, then preview a regional inventory update."
+- "Look up this audit entry and show the captured previous state."
 
 ## What's exposed
 
-**126 tools across 19 modules + 4 meta tools.**
+**126 registered tools, including 4 server and audit-control tools.**
 
 | Module | Tools |
 |---|---|
@@ -335,18 +321,40 @@ mypy src/gmc_mcp
 ## Roadmap
 
 - v0.3: webhook handler scaffolding (auto-respond to `gmc_subscribe` callbacks)
-- v0.3: native Merchant API v1 GA migration when Google releases it
 - v0.4: BigQuery export of Reports queries
 - v0.4: rule-based auto-fixers ("on disapproval, retry with corrected attribute")
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). PRs and issues welcome — community
+See [CONTRIBUTING.md](https://github.com/kiwoongeom/gmc-mcp/blob/main/CONTRIBUTING.md). PRs and issues welcome — community
 input helps determine which GMC workflows deserve dedicated tools.
+
+## Earliest identified PyPI release — scope and evidence
+
+In our **2026-11-11 public-record review**, `gmc-mcp` was the **earliest
+identified Google Merchant Center MCP (GMC MCP) distribution** meeting all
+three conditions together: **Merchant API v1**, **MIT license**, and
+**publication on PyPI**.
+
+- The first PyPI file for `gmc-mcp` 0.2.0 was uploaded on
+  **2026-05-02 at 18:06:53 UTC**. Its wheel declares MIT and uses Merchant API
+  v1 endpoints. See the [release](https://pypi.org/project/gmc-mcp/0.2.0/)
+  and [PyPI upload metadata](https://pypi.org/pypi/gmc-mcp/0.2.0/json).
+- Earlier GMC MCP projects existed. For example,
+  [Webloom's May 1 source](https://github.com/webloom-agency/merchant-center-mcp/tree/b2578bde8fe7c0bea4330911536c65b4d2079988)
+  already used Merchant API v1 and MIT. We found no earlier PyPI release for
+  its declared package name, `mcp-google-merchant`; that name returned HTTP
+  404 during the review.
+- The review covered web/GitHub searches, historical source and package
+  metadata, and current PyPI names containing `mcp` plus `merchant` or `gmc`.
+  It cannot rule out deleted distributions, other package names, or
+  unindexed projects. This is a **scoped historical finding**, not proof of
+  worldwide priority or a No. 1 quality, popularity, or performance ranking.
+
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](https://github.com/kiwoongeom/gmc-mcp/blob/main/LICENSE).
 
 ---
 

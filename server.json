@@ -1,17 +1,17 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.kiwoongeom/gmc-mcp",
-  "description": "MIT-licensed pip-installable MCP for Google Merchant Center on Merchant API v1 (126 tools).",
+  "description": "Google Merchant Center MCP (GMC MCP): 126 tools, inventory, reports, dry-run and audit logs.",
   "repository": {
     "url": "https://github.com/kiwoongeom/gmc-mcp",
     "source": "github"
   },
-  "version": "0.2.6",
+  "version": "0.2.7",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "gmc-mcp",
-      "version": "0.2.6",
+      "version": "0.2.7",
       "transport": {
         "type": "stdio"
       },

@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "gmc-mcp"
-version = "0.2.6"
-description = "MCP server for Google Merchant Center on Merchant API v1. MIT-licensed, pip install-able, 126 tools across 19 modules with audit log, rollback, and dry-run."
+version = "0.2.7"
+description = "Google Merchant Center MCP (GMC MCP): 126 tools for products, feed diagnostics, inventory and reports on Merchant API v1, with dry-run, audit logs and supported rollback."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
