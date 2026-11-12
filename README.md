@@ -16,6 +16,8 @@
 > and other MCP-compatible clients directly to Google's Merchant API v1.
 > Inspect product issues, query Shopping reports, update inventory, and manage
 > account operations with **134 tools** in one self-hosted Python package.
+> Audit storefront policies, review heuristic risk scores, prepare fix plans
+> and appeal drafts, and track changes with weekly monitoring.
 
 `gmc-mcp` is MIT-licensed and available as
 [Google Merchant Center MCP (GMC MCP) on PyPI](https://pypi.org/project/gmc-mcp/).
@@ -32,7 +34,9 @@ No hosted connector is required.
 | Inventory and bulk operations | Update regional/local inventory, prices, and availability across products. |
 | Account operations | Manage promotions, returns, shipping settings, users, regions, and other Merchant Center settings. |
 | Auditing and recovery | Record writes in a local JSONL audit log and roll back supported operations when a prior snapshot is available. |
-| Storefront policy review | Inspect linked policies and contact information, prioritize fixes, draft an appeal and persist weekly monitoring reports. |
+| Policy audit and risk scoring | Inspect public policy pages and contact information, retain downloaded evidence, and report a clearly labelled heuristic storefront risk score. |
+| Fix plans and appeal drafts | Prioritize observed problems and generate a merchant-reviewed appeal draft with unresolved checks and retrieved account issues. |
+| Weekly monitoring | Persist schedules, compare scores and account issues, and record local alerts through an OS-scheduled worker. |
 
 ## Built for day-to-day operations
 
@@ -54,15 +58,28 @@ No hosted connector is required.
 The release verification covers the installed package, MCP startup and tool
 registration, and live read-only Google Merchant API requests:
 
-- **MCP stdio initialization and all 134 tools registered** in the local 0.3.0 integration check.
+- **Installed 0.3.0 wheel: MCP stdio initialization and all 134 tools registered.**
+  A comparison with 0.2.7 confirmed that all **126 existing tools remain**.
+- **All 8 new policy tools were called successfully over the actual MCP protocol**
+  using the installed package, alongside existing product and report tools.
 - **Live product listing and Reports queries succeeded**, including a Reports
   query with dry-run enabled that returned real account data.
-- The **53-test 0.2.7 baseline** is retained, with additional policy and monitoring tests covering public-network restrictions, incomplete audits, evidence files, weekly cadence and draft generation. Baseline coverage includes pagination, API error
-  propagation, auditing, and continued interception of writes in dry-run mode.
-- The 0.2.7 **CI checks passed on Linux, Windows, and macOS**, across Python 3.10–3.13, with
-  Ruff lint/format checks and mypy type checking.
+- **Live policy audit: 7 public storefront pages retrieved**, Google account
+  issues queried, evidence hashes verified, and a saved report, fix plan and
+  review-required appeal draft retrieved. No appeal was submitted.
+- **73 offline tests passed**: the retained 53-test baseline plus 20 policy
+  and monitoring cases. These cover private-network blocking, IP-pinned TLS,
+  redirects, complete/partial raw downloads, incomplete assessments, error
+  retention, weekly cadence, concurrent-worker leases and draft generation.
+- **Native Windows Task Scheduler verification:** a due weekly job performed
+  a real audit and exited successfully. A second immediate due-check skipped
+  the already-completed job. Seven-day timing was also tested with a simulated
+  clock; a seven-day wall-clock observation has not yet elapsed.
+- Release checks include **Ruff lint/format and mypy**. The CI matrix covers
+  Linux, Windows and macOS with Python 3.10–3.13.
 
-The live checks exercise product listing and report queries. They do not
+The live checks exercise product listing, report queries and the new policy
+workflow against a merchant-controlled storefront. They do not
 constitute live validation of every tool or permission combination. Writes
 were not executed against the live account during release verification.
 
@@ -72,6 +89,8 @@ were not executed against the live account during release verification.
 - "Which products had impressions but zero clicks last week?"
 - "Enable dry-run, then preview a regional inventory update."
 - "Look up this audit entry and show the captured previous state."
+- "Audit my storefront policies, show the highest-priority fixes, and prepare an appeal draft for review."
+- "Enable weekly policy monitoring and show changes since the previous audit."
 
 ## What's exposed
 
