@@ -5,7 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.3.1] - 2026-11-12
+
+### Focused default tools
+- Expose 60 tools backed by existing successful API/local execution records, including successful empty queries. Remove 74 unverified, account-blocked or unsupported operations from the public MCP surface while preserving internal source modules.
+- Lead README and package descriptions with supported workflows and benefits. Keep checkout review, heuristic policy scoring and monitoring limits explicit.
+- Reuse existing execution evidence. No new test suite or runtime checks were run for this release.
+
+### Corrected capability claims and API requests
+- Preserve dry-run responses in delete/remove tools and distinguish bulk preview
+  counts from actual applied/deleted counts. A preview is not a completed write.
+- Policy rules 1.2: separate shared/hidden page content from policy evidence so
+  an empty page with a newsletter footer cannot receive a clean score. Older
+  stored scores require re-auditing without erasing their original evidence.
+- Four compatibility placeholders are not supported operations: account tax
+  read/update, program manual-review submission, and online return policy update.
+  Earlier feature-list claims for these operations were incorrect. They now
+  report `UNSUPPORTED_FEATURE` internally and are not registered as public tools.
+- Registration counts are not working-feature counts. Actual Google access,
+  resource configuration, local execution and dry-run validation are distinct.
+- Correct policy false-clean scoring, API routes and report queries; preserve
+  partial export results and refuse ignored bulk-delete filters/dry-run rollback.
+- Correct LFP provider/subaccount routing and composite target/store IDs; fix the
+  Business Profile link request to use `gbpEmail`. These writes have only been
+  exercised as local dry-runs, not accepted changes on Google.
 
 ## [0.3.0] - 2026-11-12
 
@@ -19,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   incomplete coverage and full downloaded-byte evidence paths and hashes.
 
 ### Compatibility
-- Preserve all existing 126 MCP tools; total registered tools is now 134.
+- Historical 0.3.0 registered 134 tools. Version 0.3.1 replaces this public surface with 60 selected tools.
 - Keep the 12 OS/Python CI combinations and select the supported macOS Intel
   runner explicitly after arm64 runner allocation left release checks queued.
 - No external LLM dependency, automatic Merchant API writes, appeal submission,
@@ -122,8 +145,9 @@ remove the "first" overclaim and present a comparison table instead.
   required to set up regional inventory targeting.
 - `tools/accounts.py`: `gmc_update_business_info` (PATCH businessInfo —
   address, phone, customer service, KR business registration number).
-- `tools/accounts.py`: `gmc_request_program_review` and `gmc_get_program_review`
-  for re-requesting Shopping Ads / Free Listings approval after fixing issues.
+- `tools/accounts.py`: registered program-review tool names. Correction: v1 has
+  no manual-review submission method; `gmc_request_program_review` is unsupported.
+  `gmc_get_program_review` reads program eligibility, not a manual-review status.
 
 ## [0.2.0] - 2026-05-01
 
@@ -134,12 +158,14 @@ remove the "first" overclaim and present a comparison table instead.
   documentation-lookup helpers. This is the first one you can `pip install`,
   audit the source of, and run with your credentials staying local.
 
-### Added — full Merchant API v1 surface
-- `tools/return_policies.py`: list / get / create / update / delete `onlineReturnPolicies` (Google now requires a return policy in US/EU).
+### Added — initial API coverage (corrected capability notes)
+- `tools/return_policies.py`: list / get / create / delete `onlineReturnPolicies`.
+  The originally advertised update operation is not provided by Merchant API.
 - `tools/homepage.py`: get / update / `claim` / `unclaim` the registered homepage.
 - `tools/account_config.py`: business identity, checkout settings (per program),
-  automatic improvements, autofeed settings, account tax, email preferences,
+  automatic improvements, autofeed settings, email preferences,
   Terms of Service (latest / agreement states / accept).
+  Originally advertised account tax read/update operations are unsupported.
 - `tools/quotas.py`: list per-method quota usage and limits.
 - `tools/reviews.py`: merchant + product reviews CRUD.
 - `tools/conversions.py`: conversion sources CRUD + undelete.

@@ -51,7 +51,7 @@ def register(mcp, client: MerchantClient) -> None:
         """Get URI checkout settings.
 
         program: only `'checkout'` is supported by Merchant API v1 (this is the
-        Buy-on-Google / URI checkout program, NOT free-listings or shopping-ads).
+        direct checkout link program, not a Buy on Google payment integration).
         """
         return client.request(
             "GET",
@@ -67,8 +67,9 @@ def register(mcp, client: MerchantClient) -> None:
         Body example:
             {
               "uriSettings": {
-                "checkoutUriTemplate": "https://your-store.com/cart?items={item_ids}"
-              }
+                "checkoutUriTemplate": "https://your-store.com/checkout?item_id={id}"
+              },
+              "eligibleDestinations": ["FREE_LISTINGS", "SHOPPING_ADS"]
             }
         """
         return client.request(
@@ -103,11 +104,13 @@ def register(mcp, client: MerchantClient) -> None:
     @mcp.tool()
     def gmc_delete_checkout_settings(program: str = "checkout") -> dict[str, Any]:
         """Delete URI checkout settings (program defaults to 'checkout')."""
-        client.request(
+        result = client.request(
             "DELETE",
             f"accounts/v1/{acct}/programs/{program}/checkoutSettings",
             op="delete_checkout_settings",
         )
+        if result.get("_dry_run"):
+            return result
         return {"deleted_program_checkout": program}
 
     # ---------------- Automatic improvements ----------------
@@ -176,29 +179,22 @@ def register(mcp, client: MerchantClient) -> None:
 
     @mcp.tool()
     def gmc_get_account_tax() -> dict[str, Any]:
-        """Get US account tax settings."""
-        return client.request("GET", f"accounts/v1/{acct}/accountTax")
+        """Unsupported: Merchant API has no legacy accounttax service."""
+        raise NotImplementedError(
+            "UNSUPPORTED_FEATURE: Merchant API has no accounttax service. "
+            "Manage tax settings in Merchant Center; this tool cannot read them. "
+            "https://developers.google.com/merchant/api/guides/compatibility/accounts"
+        )
 
     @mcp.tool()
     def gmc_update_account_tax(
         tax_rules: list[dict[str, Any]], update_mask: str = "taxRules"
     ) -> dict[str, Any]:
-        """Update US tax rules. Body example:
-        [
-          {"region": "US-CA", "useGoogleRate": True, "shippingTaxed": False},
-          {"region": "US-NY", "ratePercent": 8.0, "shippingTaxed": True}
-        ]
-        """
-        before = None
-        with contextlib.suppress(Exception):
-            before = client.request("GET", f"accounts/v1/{acct}/accountTax")
-        return client.request(
-            "PATCH",
-            f"accounts/v1/{acct}/accountTax",
-            params={"updateMask": update_mask},
-            json_body={"taxRules": tax_rules},
-            op="update_account_tax",
-            before=before,
+        """Unsupported: Merchant API has no legacy accounttax update service."""
+        raise NotImplementedError(
+            "UNSUPPORTED_FEATURE: Merchant API has no accounttax service. "
+            "Manage tax settings in Merchant Center; no tax settings were changed. "
+            "https://developers.google.com/merchant/api/guides/compatibility/accounts"
         )
 
     # ---------------- Email preferences ----------------
@@ -241,36 +237,37 @@ def register(mcp, client: MerchantClient) -> None:
         """
         return client.request(
             "GET",
-            "termsOfService/v1/termsOfService:retrieveLatest",
+            "accounts/v1/termsOfService:retrieveLatest",
             params={"regionCode": region_code, "kind": kind},
         )
 
     @mcp.tool()
     def gmc_list_tos_agreement_states(max_pages: int = 3) -> dict[str, Any]:
-        """List the TOS agreement states for the current account."""
-        items = list(
-            client.paginate(
-                "GET",
-                f"accounts/v1/{acct}/termsOfServiceAgreementStates",
-                items_key="termsOfServiceAgreementStates",
-                max_pages=max_pages,
-            )
+        """Retrieve the application TOS agreement state; v1 has no list method."""
+        state = client.request(
+            "GET",
+            f"accounts/v1/{acct}/termsOfServiceAgreementStates:retrieveForApplication",
         )
+        items = [state] if state else []
         return {"count": len(items), "states": items}
 
     @mcp.tool()
-    def gmc_accept_tos(tos_name: str, agreement_state: str | None = None) -> dict[str, Any]:
+    def gmc_accept_tos(
+        tos_name: str, agreement_state: str | None = None, region_code: str = "US"
+    ) -> dict[str, Any]:
         """Accept a TermsOfService.
 
         tos_name: full name of the TermsOfService resource (from gmc_get_latest_tos.name).
-        agreement_state: optional name of an existing agreement-state resource.
+        region_code: country or 001 for global terms. agreement_state is unsupported in v1.
         """
-        params = {"name": tos_name}
+        if not tos_name.startswith("termsOfService/") or len(tos_name.split("/")) != 2:
+            raise ValueError("tos_name must be termsOfService/{version}")
         if agreement_state:
-            params["agreementState"] = agreement_state
+            raise ValueError("agreement_state is not supported by Merchant API v1; use region_code")
+        params = {"account": acct, "regionCode": region_code}
         return client.request(
             "POST",
-            f"termsOfService/v1/{tos_name}:accept",
+            f"accounts/v1/{tos_name}:accept",
             params=params,
             op="accept_tos",
         )

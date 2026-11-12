@@ -24,6 +24,7 @@ from .client import MerchantClient
 POLICY_SOURCE = "https://support.google.com/merchants/answer/6150127"
 RULE_SOURCE = "https://support.google.com/merchants/answer/6150244"
 WEEK = 7 * 24 * 3600
+RULES_VERSION = "1.2"
 LIMIT = 2 * 1024 * 1024
 CATEGORIES = {
     "contact": r"contact|support|customer.service|문의|고객센터|연락",
@@ -72,33 +73,82 @@ class Page(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.parts: list[str] = []
         self.links: list[tuple[str, str]] = []
+        self.content_parts: list[str] = []
+        self.content_links: list[tuple[str, str]] = []
+        self.content_stack: list[tuple[str, bool]] = []
+        self.current_is_content = False
+        self.has_content_form = False
         self.hidden = 0
         self.current: tuple[str, list[str]] | None = None
         self.has_form = False
+        self.heading_parts: list[str] = []
+        self.heading_depth = 0
         self.feed(html)
         self.text = " ".join(self.parts)
+        self.content_text = " ".join(self.content_parts)
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         values = dict(attrs)
+        excluded = (
+            bool(self.content_stack and self.content_stack[-1][1])
+            or tag in {"head", "header", "footer", "nav", "aside"}
+            or values.get("role") in {"banner", "contentinfo", "navigation", "complementary"}
+            or "hidden" in values
+            or values.get("aria-hidden") == "true"
+        )
+        if tag not in {
+            "area",
+            "base",
+            "br",
+            "col",
+            "embed",
+            "hr",
+            "img",
+            "input",
+            "link",
+            "meta",
+            "param",
+            "source",
+            "track",
+            "wbr",
+        }:
+            self.content_stack.append((tag, excluded))
+        if tag in {"title", "h1"}:
+            self.heading_depth += 1
         if tag in {"script", "style", "noscript"}:
             self.hidden += 1
         if tag == "form":
             self.has_form = True
+            if not excluded and not self.hidden:
+                self.has_content_form = True
         if tag == "a" and values.get("href"):
             self.current = (str(values["href"]), [])
+            self.current_is_content = not excluded
 
     def handle_data(self, data: str) -> None:
         if not self.hidden and data.strip():
+            if self.heading_depth:
+                self.heading_parts.append(data.strip())
             self.parts.append(data.strip())
+            if not self.content_stack or not self.content_stack[-1][1]:
+                self.content_parts.append(data.strip())
             if self.current:
                 self.current[1].append(data.strip())
 
     def handle_endtag(self, tag: str) -> None:
+        if tag in {"title", "h1"}:
+            self.heading_depth = max(0, self.heading_depth - 1)
         if tag in {"script", "style", "noscript"}:
             self.hidden = max(0, self.hidden - 1)
         if tag == "a" and self.current:
             self.links.append((self.current[0], " ".join(self.current[1])))
+            if self.current_is_content:
+                self.content_links.append(self.links[-1])
             self.current = None
+        for index in range(len(self.content_stack) - 1, -1, -1):
+            if self.content_stack[index][0] == tag:
+                del self.content_stack[index:]
+                break
 
 
 def public_addresses(host: str) -> list[str]:
@@ -197,8 +247,40 @@ def fetch_page(url: str, raw_dir: Path, origin: str) -> dict[str, Any]:
                     r"<title[^>]*>\s*(client challenge|just a moment|access denied)", html, re.I
                 )
             )
-            usable = response.status == 200 and complete and "html" in content_type and not blocked
-            return {"url": url, "usable": usable, "html": html if usable else "", "hops": hops}
+            soft404 = bool(
+                re.search(
+                    r"\b404\b|\bnot\s+found\b|페이지를?\s*찾을\s*수\s*없|존재하지\s*않",
+                    " ".join(Page(html).heading_parts),
+                    re.I,
+                )
+            )
+            usable = (
+                response.status == 200
+                and complete
+                and "html" in content_type
+                and not blocked
+                and not soft404
+            )
+            reason = (
+                "incomplete_download"
+                if not complete
+                else "http_error"
+                if response.status != 200
+                else "non_html"
+                if "html" not in content_type
+                else "blocked"
+                if blocked
+                else "soft_404"
+                if soft404
+                else None
+            )
+            return {
+                "url": url,
+                "usable": usable,
+                "html": html if usable else "",
+                "hops": hops,
+                "unusable_reason": reason,
+            }
         except Exception:
             path = raw_dir / f"{uuid.uuid4().hex}.error.txt"
             path.write_text(traceback.format_exc(), encoding="utf-8")
@@ -248,7 +330,29 @@ class PolicyAuditor:
             row = db.execute("SELECT body FROM audits WHERE id=?", (audit_id,)).fetchone()
         if not row:
             raise ValueError("Audit ID not found for this Merchant Center account")
-        return json.loads(row[0])
+        audit = json.loads(row[0])
+        if audit.get("rules_version") != RULES_VERSION:
+            # Preserve the stored evidence; never present a superseded score as current.
+            audit["previous_rules_assessment"] = {
+                key: audit.get(key)
+                for key in ("risk_score", "risk_level", "assessment_status", "coverage", "checks")
+            }
+            audit.update(
+                risk_score=None,
+                risk_level="unassessed",
+                assessment_status="partial",
+                coverage=0.0,
+                requires_reaudit=True,
+                checks=[
+                    {
+                        **check,
+                        "status": "unknown",
+                        "evidence": "Stored audit uses superseded rules; run a new audit before relying on this check",
+                    }
+                    for check in audit["checks"]
+                ],
+            )
+        return audit
 
     def list_audits(self, limit: int = 20) -> dict[str, Any]:
         with self.connection() as db:
@@ -304,13 +408,28 @@ class PolicyAuditor:
                         break
             page = fetch(candidate) if candidate else home
             document = Page(page["html"])
-            text = document.text
-            if not home_ok or not page["usable"]:
-                status, evidence = "unknown", "Page could not be assessed"
+            # Shared navigation/footer text is not independent policy evidence.
+            text = document.content_text if candidate else document.text
+            duplicates_home = bool(
+                candidate
+                and (
+                    page["url"] == home["url"]
+                    or " ".join(document.text.split()) == " ".join(parsed.text.split())
+                )
+            )
+            if not home_ok or not page["usable"] or duplicates_home:
+                status, evidence = (
+                    "unknown",
+                    "Page could not be assessed: "
+                    + str(page.get("unusable_reason") or "unavailable"),
+                )
+                if duplicates_home:
+                    evidence = "Policy URL returned the same content as the homepage; policy content was not independently observed"
             elif name == "contact":
                 match = re.search(r"[\w.+-]+@[\w.-]+\.[a-z]{2,}|\+?\d[\d ()-]{7,}\d", text, re.I)
-                mail_link = any(h.startswith(("mailto:", "tel:")) for h, _ in document.links)
-                observed = bool(match or mail_link or (candidate and document.has_form))
+                links = document.content_links if candidate else document.links
+                mail_link = any(h.startswith(("mailto:", "tel:")) for h, _ in links)
+                observed = bool(match or mail_link or (candidate and document.has_content_form))
                 status = "pass" if observed else "fail"
                 evidence = (
                     "Contact method observed; validity requires manual verification"
@@ -368,14 +487,14 @@ class PolicyAuditor:
         coverage = sum(c["status"] != "unknown" for c in checks) / len(checks)
         score = (
             sum(c["weight"] for c in checks if c["status"] == "fail")
-            if home_ok and coverage >= 0.6
+            if home_ok and coverage == 1
             else None
         )
         result = {
             "audit_id": audit_id,
             "url": url,
             "created_utc_epoch": time.time(),
-            "rules_version": "1.0",
+            "rules_version": RULES_VERSION,
             "risk_score": score,
             "risk_scope": "Sampled storefront text only; Google-reported account issues are shown independently",
             "assessment_status": "partial"

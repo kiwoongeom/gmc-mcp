@@ -10,7 +10,18 @@ from ..client import MerchantClient
 
 
 def register(mcp, client: MerchantClient) -> None:
-    acct = client.account_path()
+    # LFP resources belong to the approved provider, not its target subaccount.
+    acct = client.account_path(client.config.account_id)
+
+    def store_id(store_code: str, target_account: str | None) -> str:
+        if "~" in store_code:
+            return store_code
+        if not target_account or not target_account.isdigit():
+            raise ValueError(
+                "Pass store_code as {target_merchant_id}~{store_code}, "
+                "or supply a numeric target_account; no store was changed."
+            )
+        return f"{target_account}~{store_code}"
 
     # ---- LFP stores ----
 
@@ -29,8 +40,11 @@ def register(mcp, client: MerchantClient) -> None:
         return {"count": len(items), "stores": items}
 
     @mcp.tool()
-    def gmc_lfp_get_store(store_code: str) -> dict[str, Any]:
-        return client.request("GET", f"lfp/v1/{acct}/lfpStores/{store_code}")
+    def gmc_lfp_get_store(store_code: str, target_account: str | None = None) -> dict[str, Any]:
+        """Get a provider's store using target_account plus store_code, or a combined target~store ID."""
+        return client.request(
+            "GET", f"lfp/v1/{acct}/lfpStores/{store_id(store_code, target_account)}"
+        )
 
     @mcp.tool()
     def gmc_lfp_insert_store(store: dict[str, Any]) -> dict[str, Any]:
@@ -52,16 +66,20 @@ def register(mcp, client: MerchantClient) -> None:
         )
 
     @mcp.tool()
-    def gmc_lfp_delete_store(store_code: str) -> dict[str, Any]:
+    def gmc_lfp_delete_store(store_code: str, target_account: str | None = None) -> dict[str, Any]:
+        """Delete a provider's store identified by target_account/store_code or a combined ID."""
+        identifier = store_id(store_code, target_account)
         before = None
         with contextlib.suppress(Exception):
-            before = client.request("GET", f"lfp/v1/{acct}/lfpStores/{store_code}")
-        client.request(
+            before = client.request("GET", f"lfp/v1/{acct}/lfpStores/{identifier}")
+        result = client.request(
             "DELETE",
-            f"lfp/v1/{acct}/lfpStores/{store_code}",
+            f"lfp/v1/{acct}/lfpStores/{identifier}",
             op="lfp_delete_store",
             before=before,
         )
+        if result.get("_dry_run"):
+            return result
         return {"deleted_store_code": store_code}
 
     # ---- LFP inventories ----

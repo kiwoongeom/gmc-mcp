@@ -72,6 +72,29 @@ def test_audit_roundtrip_and_raw_evidence(auditor: PolicyAuditor) -> None:
     assert Path(result["account"]["raw_response_path"]).is_file()
 
 
+@pytest.mark.parametrize("old_rules", ["1.0", "1.1", None])
+def test_old_saved_scores_require_reaudit_without_erasing_evidence(auditor, old_rules):
+    import json
+
+    old = auditor.run("https://example.com/")
+    old["rules_version"] = old_rules
+    stored = json.dumps(old)
+    with auditor.connection() as db:
+        db.execute("UPDATE audits SET body=? WHERE id=?", (stored, old["audit_id"]))
+    result = auditor.get(old["audit_id"])
+    assert result["risk_score"] is None
+    assert result["risk_level"] == "unassessed"
+    assert result["requires_reaudit"] is True
+    assert result["previous_rules_assessment"]["risk_score"] == 0
+    assert len(auditor.plan(old["audit_id"])["steps"]) == 7
+    assert auditor.appeal(old["audit_id"])["unresolved_checks"] == 7
+    with auditor.connection() as db:
+        assert (
+            db.execute("SELECT body FROM audits WHERE id=?", (old["audit_id"],)).fetchone()[0]
+            == stored
+        )
+
+
 def test_missing_policy_plan_and_honest_appeal(auditor: PolicyAuditor) -> None:
     original = auditor.fetcher
 
@@ -110,11 +133,11 @@ def test_fetch_budget_reports_incomplete_coverage(auditor: PolicyAuditor) -> Non
         auditor.run("https://example.com/", max_pages=9)
 
 
-def test_partial_coverage_cannot_claim_complete_even_with_zero_score(
+def test_partial_coverage_cannot_receive_zero_score(
     auditor: PolicyAuditor,
 ) -> None:
     report = auditor.run("https://example.com/", max_pages=5)
-    assert report["risk_score"] == 0
+    assert report["risk_score"] is None
     assert report["coverage"] < 1
     assert report["assessment_status"] == "partial"
 
@@ -239,7 +262,7 @@ def test_monitor_account_changes_and_failure_retry(
     )
     failure = auditor.run_due()["runs"][0]
     assert failure["status"] == "failed"
-    assert "worker failure" in Path(failure["raw_error_path"]).read_text()
+    assert "worker failure" in Path(failure["raw_error_path"]).read_text(encoding="utf-8")
     assert auditor.run_due()["runs"] == []
 
 
@@ -297,20 +320,22 @@ def test_active_run_is_not_reentered_by_other_worker(
     assert len(auditor.run_due()["runs"]) == 1
 
 
-def test_all_original_tools_preserved(config, client, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_verified_default_tools(config, client, monkeypatch: pytest.MonkeyPatch) -> None:
     from gmc_mcp import server
 
     monkeypatch.setattr(server, "load_auth", lambda **kw: SimpleNamespace(account_label="test"))
     monkeypatch.setattr(server, "MerchantClient", lambda *a, **kw: client)
     mcp = server.build_server(config)
     tools = mcp._tool_manager._tools
-    assert len(tools) == 134
+    from gmc_mcp.public_tools import VERIFIED_TOOLS
+
+    assert set(tools) == VERIFIED_TOOLS
     assert all(
         t in tools
         for t in [
             "gmc_list_products",
             "gmc_query_report",
-            "gmc_rollback",
+            "gmc_get_checkout_settings",
             "gmc_generate_policy_appeal",
             "gmc_run_policy_monitors",
         ]

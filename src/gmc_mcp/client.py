@@ -26,7 +26,26 @@ class MerchantAPIError(Exception):
     def __init__(self, status: int, body: Any, message: str = ""):
         self.status = status
         self.body = body
-        super().__init__(message or f"Merchant API error {status}: {body}")
+        self.reason = ""
+        if isinstance(body, dict) and isinstance(body.get("error"), dict):
+            for detail in body["error"].get("details", []):
+                if isinstance(detail, dict):
+                    metadata = detail.get("metadata", {})
+                    if isinstance(metadata, dict) and metadata.get("REASON"):
+                        self.reason = str(metadata["REASON"])
+                        break
+        guidance = {
+            "PERMISSION_DENIED_NOT_ALLOWLISTED_TO_USE_PROMOTION_PROGRAM": "Enable the Promotions program in Merchant Center and obtain access before retrying.",
+            "NOT_FOUND_CHECKOUT_SETTINGS": "Checkout settings are not configured. Create them only if required for this account.",
+            "ITEM_NOT_FOUND": "Verify the resource ID and whether the account has access to this feature; no data was returned.",
+            "PERMISSION_DENIED_NOT_ALLOWLISTED_TO_USE_API_FOR_PROJECT": "Request access for this Reviews API project from Google; the API cannot be enabled by changing the tool URL.",
+            "PERMISSION_DENIED_NOT_ALLOWLISTED_TO_USE_API_FOR_PROJECT_ID": "Request access for the affected API project from Google; a different tool URL does not grant access.",
+            "PERMISSION_DENIED_USE_MERCHANT_REVIEWS": "Enroll in the store ratings program and configure a merchant review data source before retrying.",
+            "PERMISSION_DENIED_TO_USE_ENDPOINT": "This endpoint requires Google allowlisting (for example Local Feed Partnership). Request access before retrying.",
+            "PERMISSION_DENIED_ACCOUNT_ID": "Verify that the authenticated identity has access to this account for the requested API.",
+        }.get(self.reason, "")
+        text = message or f"Merchant API error {status}: {body}"
+        super().__init__(f"{text} Action required: {guidance}" if guidance else text)
 
 
 class MerchantClient:

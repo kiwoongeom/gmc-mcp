@@ -50,18 +50,10 @@ def register(mcp, client: MerchantClient) -> None:
     def gmc_update_return_policy(
         policy_id: str, policy: dict[str, Any], update_mask: str | None = None
     ) -> dict[str, Any]:
-        """Patch an existing return policy. update_mask is a comma-separated FieldMask."""
-        before = None
-        with contextlib.suppress(Exception):
-            before = client.request("GET", f"{base}/{policy_id}")
-        params = {"updateMask": update_mask} if update_mask else None
-        return client.request(
-            "PATCH",
-            f"{base}/{policy_id}",
-            params=params,
-            json_body=policy,
-            op="update_return_policy",
-            before=before,
+        """Unsupported: Merchant API has no online-return-policy update method."""
+        raise NotImplementedError(
+            "UNSUPPORTED_FEATURE: Merchant API has no onlineReturnPolicies PATCH method. "
+            "Edit the existing policy in Merchant Center. No replacement or deletion was performed."
         )
 
     @mcp.tool()
@@ -70,5 +62,9 @@ def register(mcp, client: MerchantClient) -> None:
         before = None
         with contextlib.suppress(Exception):
             before = client.request("GET", f"{base}/{policy_id}")
-        client.request("DELETE", f"{base}/{policy_id}", op="delete_return_policy", before=before)
+        result = client.request(
+            "DELETE", f"{base}/{policy_id}", op="delete_return_policy", before=before
+        )
+        if result.get("_dry_run"):
+            return result
         return {"deleted": policy_id}

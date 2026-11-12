@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 import time
+import traceback
 from pathlib import Path
 from typing import Any
 
@@ -74,6 +76,8 @@ def register(mcp, client: MerchantClient) -> None:
         entry = log.find(audit_id)
         if not entry:
             return {"error": f"Audit ID not found: {audit_id}"}
+        if entry.get("dry_run"):
+            return {"error": "A dry-run entry changed no remote data and cannot be rolled back."}
         before = entry.get("before")
         if not before:
             return {
@@ -125,16 +129,41 @@ def register(mcp, client: MerchantClient) -> None:
 
         manifest: dict[str, Any] = {"output_dir": str(out), "resources": {}}
 
+        def record_error(name: str, error: Exception) -> None:
+            path = out / f"{name}.error.txt"
+            path.write_text(traceback.format_exc(), encoding="utf-8")
+            manifest["resources"][name] = {
+                "status": "failed",
+                "error": str(error),
+                "raw_error_path": str(path),
+                "bytes": path.stat().st_size,
+                "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            }
+
         def dump_paginated(name: str, path: str, key: str) -> None:
             items: list[Any] = []
-            params: dict[str, Any] = {"pageSize": 250}
-            for _ in range(max_per_resource // 250 + 1):
-                p = client.request("GET", path, params=params)
-                items.extend(p.get(key, []) or [])
-                token = p.get("nextPageToken")
-                if not token or len(items) >= max_per_resource:
-                    break
-                params["pageToken"] = token
+            params: dict[str, Any] = {"pageSize": min(250, max_per_resource)}
+            try:
+                for _ in range(max_per_resource // 250 + 1):
+                    p = client.request("GET", path, params=params)
+                    items.extend(p.get(key, []) or [])
+                    token = p.get("nextPageToken")
+                    if not token or len(items) >= max_per_resource:
+                        break
+                    params["pageToken"] = token
+            except Exception as e:
+                record_error(name, e)
+                # Preserve any pages already retrieved, even if a later page failed.
+                f = out / f"{name}.json"
+                f.write_text(
+                    json.dumps(items[:max_per_resource], indent=2, ensure_ascii=False),
+                    encoding="utf-8",
+                )
+                manifest["resources"][name].update(
+                    {"path": str(f), "count": min(len(items), max_per_resource)}
+                )
+                return
+            items = items[:max_per_resource]
             f = out / f"{name}.json"
             f.write_text(json.dumps(items, indent=2, ensure_ascii=False), encoding="utf-8")
             manifest["resources"][name] = {"path": str(f), "count": len(items)}
@@ -143,7 +172,7 @@ def register(mcp, client: MerchantClient) -> None:
             try:
                 payload = client.request("GET", path, params=params)
             except Exception as e:
-                manifest["resources"][name] = {"error": str(e)[:200]}
+                record_error(name, e)
                 return
             f = out / f"{name}.json"
             f.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -172,6 +201,11 @@ def register(mcp, client: MerchantClient) -> None:
             "promotions",
             f"promotions/v1/{acct}/promotions",
             "promotions",
+        )
+        manifest["status"] = (
+            "partial"
+            if any(r.get("error") for r in manifest["resources"].values())
+            else "completed"
         )
         return manifest
 

@@ -14,12 +14,13 @@ from .audit import AuditLog
 from .auth import load_auth
 from .client import MerchantClient
 from .config import Config, load_config
+from .public_tools import VERIFIED_TOOLS
 
 logger = get_logger("server")
 
 
 def build_server(config: Config | None = None, env_file: Path | None = None) -> FastMCP:
-    """Construct a FastMCP instance with all gmc_* tools registered."""
+    """Construct a FastMCP instance with only the verified default tools exposed."""
     configure_default()
     if config is None:
         config = load_config(env_file=env_file)
@@ -54,6 +55,8 @@ def build_server(config: Config | None = None, env_file: Path | None = None) -> 
             "page_size": config.page_size,
             "timeout": config.timeout,
             "transport": config.transport,
+            "tool_profile": "verified",
+            "public_tools": sorted(VERIFIED_TOOLS),
         }
 
     @mcp.tool()
@@ -103,5 +106,9 @@ def build_server(config: Config | None = None, env_file: Path | None = None) -> 
     tools.diagnostics.register(mcp, client)
     tools.regions.register(mcp, client)
     tools.policy.register(mcp, client)
+
+    for tool in list(mcp._tool_manager.list_tools()):
+        if tool.name not in VERIFIED_TOOLS:
+            mcp.remove_tool(tool.name)
 
     return mcp

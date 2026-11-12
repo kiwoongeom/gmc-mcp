@@ -53,9 +53,11 @@ def register(mcp, client: MerchantClient) -> None:
     @mcp.tool()
     def gmc_unsubscribe(subscription_id: str) -> dict[str, Any]:
         """Delete a notification subscription by ID."""
-        client.request(
+        result = client.request(
             "DELETE",
             f"notifications/v1/{acct}/notificationsubscriptions/{subscription_id}",
             op="delete_subscription",
         )
+        if result.get("_dry_run"):
+            return result
         return {"deleted": subscription_id}

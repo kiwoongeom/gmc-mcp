@@ -83,7 +83,7 @@ def test_quotas_list(client: MerchantClient) -> None:
 
 @respx.mock
 def test_reviews_list_merchant(client: MerchantClient) -> None:
-    respx.get(f"{BASE_URL}/accounts/v1/accounts/1234567890/merchantReviews").mock(
+    respx.get(f"{BASE_URL}/reviews/v1alpha/accounts/1234567890/merchantReviews").mock(
         return_value=httpx.Response(200, json={"merchantReviews": [{"id": "1"}]})
     )
     fns = _build(reviews, client)
@@ -120,7 +120,7 @@ def test_lfp_get_merchant_state(client: MerchantClient) -> None:
 
 @respx.mock
 def test_mca_list_relationships(client: MerchantClient) -> None:
-    respx.get(f"{BASE_URL}/accounts/v1/accounts/1234567890/accountRelationships").mock(
+    respx.get(f"{BASE_URL}/accounts/v1/accounts/1234567890/relationships").mock(
         return_value=httpx.Response(200, json={"accountRelationships": []})
     )
     fns = _build(mca, client)

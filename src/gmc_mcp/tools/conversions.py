@@ -71,9 +71,11 @@ def register(mcp, client: MerchantClient) -> None:
         before = None
         with contextlib.suppress(Exception):
             before = client.request("GET", f"{base}/{source_id}")
-        client.request(
+        result = client.request(
             "DELETE", f"{base}/{source_id}", op="delete_conversion_source", before=before
         )
+        if result.get("_dry_run"):
+            return result
         return {"deleted": source_id}
 
     @mcp.tool()

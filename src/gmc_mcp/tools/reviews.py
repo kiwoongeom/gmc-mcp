@@ -10,8 +10,9 @@ from ..client import MerchantClient
 
 def register(mcp, client: MerchantClient) -> None:
     acct = client.account_path()
-    mr_base = f"accounts/v1/{acct}/merchantReviews"
-    pr_base = f"accounts/v1/{acct}/productReviews"
+    # Merchant reviews remain v1alpha; product reviews have a v1 API.
+    mr_base = f"reviews/v1alpha/{acct}/merchantReviews"
+    pr_base = f"reviews/v1/{acct}/productReviews"
 
     # ---- Merchant reviews ----
 
@@ -36,7 +37,7 @@ def register(mcp, client: MerchantClient) -> None:
         """
         return client.request(
             "POST",
-            mr_base,
+            f"{mr_base}:insert",
             params={"dataSource": data_source},
             json_body=review,
             op="insert_merchant_review",
@@ -47,9 +48,11 @@ def register(mcp, client: MerchantClient) -> None:
         before = None
         with contextlib.suppress(Exception):
             before = client.request("GET", f"{mr_base}/{review_id}")
-        client.request(
+        result = client.request(
             "DELETE", f"{mr_base}/{review_id}", op="delete_merchant_review", before=before
         )
+        if result.get("_dry_run"):
+            return result
         return {"deleted": review_id}
 
     # ---- Product reviews ----
@@ -71,7 +74,7 @@ def register(mcp, client: MerchantClient) -> None:
         """Insert / upsert a product review."""
         return client.request(
             "POST",
-            pr_base,
+            f"{pr_base}:insert",
             params={"dataSource": data_source},
             json_body=review,
             op="insert_product_review",
@@ -82,7 +85,9 @@ def register(mcp, client: MerchantClient) -> None:
         before = None
         with contextlib.suppress(Exception):
             before = client.request("GET", f"{pr_base}/{review_id}")
-        client.request(
+        result = client.request(
             "DELETE", f"{pr_base}/{review_id}", op="delete_product_review", before=before
         )
+        if result.get("_dry_run"):
+            return result
         return {"deleted": review_id}

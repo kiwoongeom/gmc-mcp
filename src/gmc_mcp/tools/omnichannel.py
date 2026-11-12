@@ -43,9 +43,9 @@ def register(mcp, client: MerchantClient) -> None:
         settings example:
             {
               "regionCode": "US",
-              "lsfType": "GHLSF_FULL",
-              "inStock": {"uri": "https://store.com/storefinder", "state": "ACTIVE"},
-              "pickup": {"uri": "https://store.com/pickup", "state": "ACTIVE"}
+              "lsfType": "MHLSF_BASIC",
+              "inStock": {"uri": "https://store.com/storefinder"},
+              "pickup": {"uri": "https://store.com/pickup"}
             }
         """
         body = dict(settings)
@@ -96,7 +96,7 @@ def register(mcp, client: MerchantClient) -> None:
         return client.request(
             "POST",
             f"accounts/v1/{acct}/gbpAccounts:linkGbpAccount",
-            json_body={"gbpAccount": gbp_email},
+            json_body={"gbpEmail": gbp_email},
             op="link_gbp_account",
         )
 

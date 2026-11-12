@@ -22,7 +22,7 @@ def register(mcp, client: MerchantClient) -> None:
         items = list(
             client.paginate(
                 "GET",
-                f"accounts/v1/{acct}/accountRelationships",
+                f"accounts/v1/{acct}/relationships",
                 items_key="accountRelationships",
                 max_pages=max_pages,
             )
@@ -31,7 +31,7 @@ def register(mcp, client: MerchantClient) -> None:
 
     @mcp.tool()
     def gmc_get_relationship(relationship_id: str) -> dict[str, Any]:
-        return client.request("GET", f"accounts/v1/{acct}/accountRelationships/{relationship_id}")
+        return client.request("GET", f"accounts/v1/{acct}/relationships/{relationship_id}")
 
     @mcp.tool()
     def gmc_update_relationship(
@@ -41,13 +41,11 @@ def register(mcp, client: MerchantClient) -> None:
     ) -> dict[str, Any]:
         before = None
         with contextlib.suppress(Exception):
-            before = client.request(
-                "GET", f"accounts/v1/{acct}/accountRelationships/{relationship_id}"
-            )
+            before = client.request("GET", f"accounts/v1/{acct}/relationships/{relationship_id}")
         params = {"updateMask": update_mask} if update_mask else None
         return client.request(
             "PATCH",
-            f"accounts/v1/{acct}/accountRelationships/{relationship_id}",
+            f"accounts/v1/{acct}/relationships/{relationship_id}",
             params=params,
             json_body=relationship,
             op="update_relationship",
@@ -58,26 +56,44 @@ def register(mcp, client: MerchantClient) -> None:
 
     @mcp.tool()
     def gmc_create_aggregation(provider_account: str) -> dict[str, Any]:
-        """Aggregate this account under a provider (typically an MCA/aggregator).
+        """Propose aggregation under a provider; provider approval may be required.
 
         provider_account: full name like 'accounts/PROVIDER_ID'.
         """
+        provider = provider_account.replace("accounts/", "providers/", 1)
+        if not provider.startswith("providers/"):
+            raise ValueError("provider_account must be accounts/{id} or providers/{id}")
         return client.request(
             "POST",
-            f"accounts/v1/{acct}/accountAggregation:create",
-            json_body={"providerAccount": provider_account},
+            f"accounts/v1/{acct}/services:propose",
+            json_body={"provider": provider, "accountService": {"accountAggregation": {}}},
             op="create_aggregation",
         )
 
     @mcp.tool()
     def gmc_delete_aggregation() -> dict[str, Any]:
-        """Remove the current aggregation from a provider."""
-        client.request(
-            "DELETE",
-            f"accounts/v1/{acct}/accountAggregation",
-            op="delete_aggregation",
+        """Reject existing aggregation services; return not_configured if none exist."""
+        services = list(
+            client.paginate("GET", f"accounts/v1/{acct}/services", items_key="services")
         )
-        return {"deleted_aggregation_for": acct}
+        removed = []
+        for service in services:
+            if "accountAggregation" in service:
+                client.request(
+                    "POST",
+                    f"accounts/v1/{service['name']}:reject",
+                    op="delete_aggregation",
+                    before=service,
+                )
+                removed.append(service["name"])
+        return {
+            "deleted_aggregation_for": acct,
+            "services": removed,
+            "status": ("dry_run" if client.config.dry_run else "rejected")
+            if removed
+            else "not_configured",
+            "dry_run": client.config.dry_run,
+        }
 
     # ---- Account services (delegation) ----
 
@@ -101,10 +117,18 @@ def register(mcp, client: MerchantClient) -> None:
         provider: full account name like 'accounts/PROVIDER_ID'.
         service_type: 'ACCOUNT_MANAGEMENT' | 'ACCOUNT_AGGREGATION' | 'CAMPAIGNS_MANAGEMENT'
         """
+        types = {
+            "ACCOUNT_MANAGEMENT": "accountManagement",
+            "ACCOUNT_AGGREGATION": "accountAggregation",
+            "CAMPAIGNS_MANAGEMENT": "campaignsManagement",
+            "PRODUCTS_MANAGEMENT": "productsManagement",
+        }
+        if service_type not in types:
+            raise ValueError("Unsupported service_type; choose " + ", ".join(types))
         return client.request(
             "POST",
             f"accounts/v1/{acct}/services:propose",
-            json_body={"provider": provider, "type": service_type},
+            json_body={"provider": provider, "accountService": {types[service_type]: {}}},
             op="propose_service",
         )
 

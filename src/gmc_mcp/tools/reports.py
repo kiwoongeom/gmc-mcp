@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date, timedelta
 from typing import Any
 
 from ..client import MerchantClient
@@ -53,9 +54,20 @@ def register(mcp, client: MerchantClient) -> None:
         start_date / end_date: 'YYYY-MM-DD'
         order_by: clicks | impressions | ctr | conversions | conversion_value_micros
         """
+        order_by = {"ctr": "click_through_rate", "conversion_value_micros": "conversion_value"}.get(
+            order_by, order_by
+        )
+        if order_by not in {
+            "clicks",
+            "impressions",
+            "click_through_rate",
+            "conversions",
+            "conversion_value",
+        }:
+            raise ValueError("Unsupported performance order_by field")
         query = (
-            "SELECT offer_id, title, clicks, impressions, ctr, conversions, "
-            "conversion_value_micros "
+            "SELECT offer_id, title, clicks, impressions, click_through_rate, conversions, "
+            "conversion_value "
             "FROM product_performance_view "
             f"WHERE date BETWEEN '{start_date}' AND '{end_date}' "
             f"ORDER BY {order_by} DESC "
@@ -67,7 +79,7 @@ def register(mcp, client: MerchantClient) -> None:
     def gmc_price_competitiveness(top_n: int = 100) -> dict[str, Any]:
         """Compare your prices to benchmark prices (where available)."""
         query = (
-            "SELECT offer_id, title, price, benchmark_price "
+            "SELECT id, report_country_code, offer_id, title, price, benchmark_price "
             "FROM price_competitiveness_product_view "
             f"LIMIT {top_n}"
         )
@@ -77,21 +89,28 @@ def register(mcp, client: MerchantClient) -> None:
     def gmc_best_sellers(report_country_code: str = "US", top_n: int = 100) -> dict[str, Any]:
         """Top-selling product clusters in a given country."""
         query = (
-            "SELECT title, brand, category_l1, rank, previous_rank, relative_demand "
+            "SELECT report_category_id, report_granularity, report_country_code, report_date, "
+            "title, brand, category_l1, rank, previous_rank, relative_demand "
             "FROM best_sellers_product_cluster_view "
             f"WHERE report_country_code = '{report_country_code}' "
+            "AND report_granularity = 'WEEKLY' "
             "ORDER BY rank "
             f"LIMIT {top_n}"
         )
         return _run(client, acct, query)
 
     @mcp.tool()
-    def gmc_zero_click_products(min_impressions: int = 100) -> dict[str, Any]:
+    def gmc_zero_click_products(
+        min_impressions: int = 100, start_date: str | None = None, end_date: str | None = None
+    ) -> dict[str, Any]:
         """Products that have impressions but zero clicks — usually a CTR/title/image problem."""
+        end_date = end_date or (date.today() - timedelta(days=1)).isoformat()
+        start_date = start_date or (date.fromisoformat(end_date) - timedelta(days=29)).isoformat()
         query = (
-            "SELECT offer_id, title, impressions, clicks, ctr "
+            "SELECT offer_id, title, impressions, clicks, click_through_rate "
             "FROM product_performance_view "
-            f"WHERE impressions >= {min_impressions} AND clicks = 0 "
+            f"WHERE date BETWEEN '{start_date}' AND '{end_date}' "
+            f"AND impressions >= {min_impressions} AND clicks = 0 "
             "ORDER BY impressions DESC "
             "LIMIT 200"
         )
@@ -101,7 +120,7 @@ def register(mcp, client: MerchantClient) -> None:
     def gmc_revenue_by_brand(start_date: str, end_date: str, top_n: int = 50) -> dict[str, Any]:
         """Aggregate clicks/conversions/value by brand."""
         query = (
-            "SELECT brand, clicks, impressions, conversions, conversion_value_micros "
+            "SELECT brand, clicks, impressions, conversions, conversion_value "
             "FROM product_performance_view "
             f"WHERE date BETWEEN '{start_date}' AND '{end_date}' "
             f"LIMIT {top_n}"
@@ -121,13 +140,23 @@ def register(mcp, client: MerchantClient) -> None:
 
     @mcp.tool()
     def gmc_competitive_visibility_top_merchants(
-        report_country_code: str = "US", top_n: int = 50
+        report_country_code: str = "US",
+        top_n: int = 50,
+        *,
+        report_category_id: int,
+        start_date: str | None = None,
+        end_date: str | None = None,
     ) -> dict[str, Any]:
-        """Who ranks above you on Shopping for the same products."""
+        """Compare visibility within the required Google product category ID and date range."""
+        end_date = end_date or (date.today() - timedelta(days=1)).isoformat()
+        start_date = start_date or (date.fromisoformat(end_date) - timedelta(days=29)).isoformat()
         query = (
-            "SELECT domain, rank, ads_organic_ratio, page_overlap_rate, higher_position_rate "
+            "SELECT report_category_id, report_country_code, traffic_source, "
+            "domain, rank, ads_organic_ratio, page_overlap_rate, higher_position_rate "
             "FROM competitive_visibility_top_merchant_view "
             f"WHERE report_country_code = '{report_country_code}' "
+            f"AND report_category_id = {report_category_id} "
+            f"AND date BETWEEN '{start_date}' AND '{end_date}' "
             "ORDER BY rank "
             f"LIMIT {top_n}"
         )
@@ -137,7 +166,7 @@ def register(mcp, client: MerchantClient) -> None:
     def gmc_price_insights(top_n: int = 100) -> dict[str, Any]:
         """Google's suggested optimal price for each product (where available)."""
         query = (
-            "SELECT offer_id, title, suggested_price, predicted_impressions_change_fraction, "
+            "SELECT id, offer_id, title, suggested_price, predicted_impressions_change_fraction, "
             "predicted_clicks_change_fraction, predicted_conversions_change_fraction "
             "FROM price_insights_product_view "
             f"LIMIT {top_n}"

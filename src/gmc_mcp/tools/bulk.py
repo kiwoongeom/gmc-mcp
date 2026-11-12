@@ -36,6 +36,7 @@ def register(mcp, client: MerchantClient) -> None:
             }
 
         applied: list[str] = []
+        previewed: list[str] = []
         failed: list[dict[str, Any]] = []
         for u in updates:
             pid = u.get("product_id")
@@ -65,13 +66,16 @@ def register(mcp, client: MerchantClient) -> None:
                 body["regionalInventoryAttributes"] = attrs
 
             try:
-                client.request(
+                result = client.request(
                     "POST",
                     f"inventories/v1/{acct}/products/{pid}/regionalInventories:insert",
                     json_body=body,
                     op="bulk_update_regional_price",
                 )
-                applied.append(f"{pid}@{region}")
+                if result.get("_dry_run"):
+                    previewed.append(f"{pid}@{region}")
+                else:
+                    applied.append(f"{pid}@{region}")
             except Exception as e:
                 failed.append({"item": u, "reason": str(e)[:200]})
                 if stop_on_error:
@@ -79,6 +83,8 @@ def register(mcp, client: MerchantClient) -> None:
 
         return {
             "applied_count": len(applied),
+            "preview_count": len(previewed),
+            "_dry_run": bool(previewed),
             "failed_count": len(failed),
             "first_failed": failed[:10],
         }
@@ -100,10 +106,11 @@ def register(mcp, client: MerchantClient) -> None:
                 "would_update_count": len(product_ids),
             }
         applied: list[str] = []
+        previewed: list[str] = []
         failed: list[dict[str, Any]] = []
         for pid in product_ids:
             try:
-                client.request(
+                result = client.request(
                     "POST",
                     f"inventories/v1/{acct}/products/{pid}/regionalInventories:insert",
                     json_body={
@@ -112,11 +119,16 @@ def register(mcp, client: MerchantClient) -> None:
                     },
                     op="bulk_set_availability",
                 )
-                applied.append(pid)
+                if result.get("_dry_run"):
+                    previewed.append(pid)
+                else:
+                    applied.append(pid)
             except Exception as e:
                 failed.append({"product_id": pid, "reason": str(e)[:200]})
         return {
             "applied_count": len(applied),
+            "preview_count": len(previewed),
+            "_dry_run": bool(previewed),
             "failed_count": len(failed),
             "first_failed": failed[:10],
         }

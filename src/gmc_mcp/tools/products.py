@@ -99,13 +99,15 @@ def register(mcp, client: MerchantClient) -> None:
         before = None
         with contextlib.suppress(Exception):
             before = client.request("GET", f"products/v1/{acct}/products/{product_id}")
-        client.request(
+        result = client.request(
             "DELETE",
             f"products/v1/{acct}/productInputs/{product_id}",
             params={"dataSource": data_source},
             op="delete_product",
             before=before,
         )
+        if result.get("_dry_run"):
+            return result
         return {"deleted": product_id}
 
     @mcp.tool()
@@ -131,6 +133,11 @@ def register(mcp, client: MerchantClient) -> None:
                 "would_delete_filter_status": filter_status,
                 "max_delete": max_delete,
             }
+        if filter_status:
+            raise ValueError(
+                "filter_status is not supported by this list-products operation; "
+                "no products were deleted. Select explicit products using a report first."
+            )
 
         # Collect products
         candidates: list[dict[str, Any]] = []
@@ -138,13 +145,6 @@ def register(mcp, client: MerchantClient) -> None:
         while len(candidates) < max_delete:
             page = client.request("GET", f"products/v1/{acct}/products", params=params)
             for p in page.get("products", []) or []:
-                if filter_status:
-                    _pv_status = (p.get("productStatus") or {}).get("destinationStatuses", [])
-                    # Fall back to a Reports-style filter via productStatus.
-                    # Since list-products doesn't include the aggregated status,
-                    # we conservatively skip this filter here and rely on caller
-                    # using a Reports-driven workflow when filtering.
-                    pass
                 candidates.append(p)
                 if len(candidates) >= max_delete:
                     break
@@ -154,6 +154,7 @@ def register(mcp, client: MerchantClient) -> None:
             params["pageToken"] = token
 
         deleted: list[str] = []
+        previewed: list[str] = []
         failed: list[dict[str, Any]] = []
         for p in candidates:
             name = p.get("name", "")
@@ -163,20 +164,25 @@ def register(mcp, client: MerchantClient) -> None:
                 continue
             pid = name.split("/")[-1]
             try:
-                client.request(
+                result = client.request(
                     "DELETE",
                     f"products/v1/{acct}/productInputs/{pid}",
                     params={"dataSource": ds},
                     op="bulk_delete_product",
                     before=p,
                 )
-                deleted.append(pid)
+                if result.get("_dry_run"):
+                    previewed.append(pid)
+                else:
+                    deleted.append(pid)
             except Exception as e:
                 failed.append({"name": name, "reason": str(e)[:200]})
 
         return {
             "scanned": len(candidates),
             "deleted_count": len(deleted),
+            "preview_count": len(previewed),
+            "_dry_run": bool(previewed),
             "failed_count": len(failed),
             "failed_samples": failed[:10],
         }

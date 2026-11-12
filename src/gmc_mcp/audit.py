@@ -50,6 +50,8 @@ class AuditLog:
         return audit_id
 
     def find(self, audit_id: str) -> dict[str, Any] | None:
+        if not self.path.exists():
+            return None
         with self.path.open("r", encoding="utf-8") as f:
             for line in f:
                 entry = json.loads(line)

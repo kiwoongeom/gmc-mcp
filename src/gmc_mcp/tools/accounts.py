@@ -88,12 +88,14 @@ def register(mcp, client: MerchantClient) -> None:
         before = None
         with contextlib.suppress(Exception):
             before = client.request("GET", f"accounts/v1/{acct}/users/{email}")
-        client.request(
+        result = client.request(
             "DELETE",
             f"accounts/v1/{acct}/users/{email}",
             op="remove_user",
             before=before,
         )
+        if result.get("_dry_run"):
+            return result
         return {"removed": email}
 
     @mcp.tool()
@@ -130,22 +132,13 @@ def register(mcp, client: MerchantClient) -> None:
 
     @mcp.tool()
     def gmc_request_program_review(program_id: str, region_code: str = "US") -> dict[str, Any]:
-        """Request a manual review of a program after fixing disapproval issues.
-
-        program_id: e.g. 'shopping-ads', 'free-listings'.
-        region_code: country to request review in.
-
-        Use after you've resolved the policy / quality issues that caused suspension.
-        Limited to a few requests per period.
-        """
-        return client.request(
-            "POST",
-            f"accounts/v1/{acct}/programs/{program_id}:requestReview",
-            json_body={"regionCode": region_code},
-            op="request_program_review",
+        """Unsupported: submit manual policy reviews in Merchant Center, not Merchant API v1."""
+        raise NotImplementedError(
+            "UNSUPPORTED_FEATURE: Merchant API v1 has no program requestReview method. "
+            "Request the policy review in Merchant Center; no review was submitted."
         )
 
     @mcp.tool()
     def gmc_get_program_review(program_id: str) -> dict[str, Any]:
-        """Get the current review state of a program (pending/approved/disapproved/etc.)."""
-        return client.request("GET", f"accounts/v1/{acct}/programs/{program_id}/review")
+        """Get program eligibility state and unmet requirements, not a manual-review status."""
+        return client.request("GET", f"accounts/v1/{acct}/programs/{program_id}")
