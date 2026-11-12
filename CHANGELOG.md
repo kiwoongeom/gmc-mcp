@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-12
+
+### Added
+- Eight account-isolated policy tools: bounded public HTTPS storefront audits,
+  persisted evidence, heuristic risk scores, prioritized fix plans, review-required
+  appeal drafts, and persistent weekly monitoring with local alerts.
+- `policy-monitor-run` CLI for an OS scheduler: due-job leases, seven-day cadence,
+  retryable failures, score/account-issue change tracking and raw error retention.
+- DNS/IP validation, IP-pinned TLS connections, redirect restrictions, explicit
+  incomplete coverage and full downloaded-byte evidence paths and hashes.
+
+### Compatibility
+- Preserve all existing 126 MCP tools; total registered tools is now 134.
+- No external LLM dependency, automatic Merchant API writes, appeal submission,
+  official Google risk score or guarantee of policy compliance.
+
 ## [0.2.7] - 2026-11-11
 
 ### Documentation

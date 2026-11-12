@@ -18,8 +18,11 @@ import click
 
 from . import __version__
 from ._logging import configure_default, get_logger
-from .auth import SCOPES
+from .audit import AuditLog
+from .auth import SCOPES, load_auth
+from .client import MerchantClient
 from .config import load_config
+from .policy import PolicyAuditor
 from .server import build_server
 
 logger = get_logger("cli")
@@ -264,6 +267,19 @@ def describe(ctx: click.Context) -> None:
         "port": config.port,
     }
     click.echo(json.dumps(info, indent=2, ensure_ascii=False))
+
+
+@cli.command("policy-monitor-run")
+@click.pass_context
+def policy_monitor_run(ctx: click.Context) -> None:
+    """Run due weekly policy monitors once. Schedule this command hourly with your OS scheduler."""
+    config = load_config(env_file=ctx.obj.get("env_file"))
+    auth = load_auth(service_account_key=config.service_account_key, oauth_token=config.oauth_token)
+    with MerchantClient(config, auth, AuditLog(config.audit_log)) as client:
+        result = PolicyAuditor(client).run_due()
+    click.echo(json.dumps(result, ensure_ascii=False))
+    if any(r["status"] == "failed" for r in result["runs"]):
+        raise click.ClickException("One or more monitors failed; inspect raw_error_path")
 
 
 def main() -> None:

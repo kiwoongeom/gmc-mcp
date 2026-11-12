@@ -15,7 +15,7 @@
 > Google Merchant Center MCP (GMC MCP) connects Claude Desktop, Claude Code,
 > and other MCP-compatible clients directly to Google's Merchant API v1.
 > Inspect product issues, query Shopping reports, update inventory, and manage
-> account operations with **126 tools** in one self-hosted Python package.
+> account operations with **134 tools** in one self-hosted Python package.
 
 `gmc-mcp` is MIT-licensed and available as
 [Google Merchant Center MCP (GMC MCP) on PyPI](https://pypi.org/project/gmc-mcp/).
@@ -32,6 +32,7 @@ No hosted connector is required.
 | Inventory and bulk operations | Update regional/local inventory, prices, and availability across products. |
 | Account operations | Manage promotions, returns, shipping settings, users, regions, and other Merchant Center settings. |
 | Auditing and recovery | Record writes in a local JSONL audit log and roll back supported operations when a prior snapshot is available. |
+| Storefront policy review | Inspect linked policies and contact information, prioritize fixes, draft an appeal and persist weekly monitoring reports. |
 
 ## Built for day-to-day operations
 
@@ -53,12 +54,12 @@ No hosted connector is required.
 The release verification covers the installed package, MCP startup and tool
 registration, and live read-only Google Merchant API requests:
 
-- **MCP stdio initialization and all 126 tools registered.**
+- **MCP stdio initialization and all 134 tools registered** in the local 0.3.0 integration check.
 - **Live product listing and Reports queries succeeded**, including a Reports
   query with dry-run enabled that returned real account data.
-- **53 offline regression tests passed**, covering pagination, API error
+- The **53-test 0.2.7 baseline** is retained, with additional policy and monitoring tests covering public-network restrictions, incomplete audits, evidence files, weekly cadence and draft generation. Baseline coverage includes pagination, API error
   propagation, auditing, and continued interception of writes in dry-run mode.
-- **CI checks on Linux, Windows, and macOS**, across Python 3.10–3.13, with
+- The 0.2.7 **CI checks passed on Linux, Windows, and macOS**, across Python 3.10–3.13, with
   Ruff lint/format checks and mypy type checking.
 
 The live checks exercise product listing and report queries. They do not
@@ -74,7 +75,7 @@ were not executed against the live account during release verification.
 
 ## What's exposed
 
-**126 registered tools, including 4 server and audit-control tools.**
+**134 registered tools, including 8 policy-audit tools and 4 server and audit-control tools.**
 
 | Module | Tools |
 |---|---|
@@ -315,7 +316,64 @@ merchantapi.googleapis.com  ──►  Google Merchant Center
 - `audit.py` — append-only JSONL, lookup by ID, supports `before` snapshots.
 - `cli.py` — `gmc-mcp run | auth-init | register-gcp | webhook | describe | version`.
 
-## Testing
+## Storefront policy audit and weekly monitoring (0.3.0)
+
+Eight new MCP tools preserve the existing 126-tool interface:
+
+| Tool | Purpose |
+|---|---|
+| `gmc_run_policy_audit(url, max_pages=8, include_account=True)` | Fetch public HTTPS pages and account issues, save evidence, and evaluate storefront text. |
+| `gmc_list_policy_audits()` / `gmc_get_policy_audit(audit_id)` | Retrieve persisted audit history and full raw download paths. |
+| `gmc_get_policy_fix_plan(audit_id)` | Prioritize failed and unknown checks with verification steps. |
+| `gmc_generate_policy_appeal(audit_id, merchant_statement="")` | Save an appeal **draft** with unresolved checks and Google-reported issues; never submit it. |
+| `gmc_set_policy_monitoring(url, enabled=True)` | Save a weekly schedule; the first audit is due immediately. |
+| `gmc_get_policy_monitoring()` | Read next-due times, last reports, risk changes and local alerts. |
+| `gmc_run_policy_monitors()` | Execute due monitors on demand. |
+
+**What is checked:** homepage reachability; observed contact methods; linked
+business/About, return/refund, delivery, terms and privacy pages; and basic
+return-window/refund and shipping-time/cost wording. Checks support common
+English/Korean link labels. They do not execute storefront JavaScript, make
+purchases, validate identity documents, or verify every Google policy.
+Sources: [misrepresentation](https://support.google.com/merchants/answer/6150127)
+and [editorial requirements](https://support.google.com/merchants/answer/6150244).
+
+**Risk score:** versioned heuristic, **0 = lowest observed risk, 100 = highest**;
+not a Google trust score, probability of suspension or approval guarantee.
+Failed checks contribute homepage 30, contact 20, identity 10, returns 20,
+shipping 10, terms 5 and privacy 5. A page that cannot be assessed is `unknown`.
+If the homepage is unavailable or assessed-check coverage is below 60%, the
+score is `null` / `unassessed`, never a clean zero. Coverage refers only to these
+automated checks. Official account issues are reported separately from the
+storefront score. Checkout, product claims, price/feed consistency and identity
+verification remain manual review items even when the heuristic score is zero.
+
+**Evidence and storage:** account-isolated SQLite state and downloaded pages
+are stored under `<GMC_AUDIT_LOG parent>/policy/<account ID>/`. Every downloaded
+response includes a full `raw_download_path`, byte count and SHA-256. Downloads
+stop after 2 MiB + 1 byte; oversize bodies are explicitly marked incomplete and
+are not scored as usable pages. Redirect hops and failed responses are retained.
+Only public HTTPS destinations are permitted; resolved IPs are validated and
+pinned while TLS hostname verification remains enabled. Off-site redirects are
+not followed. Raw website text is untrusted evidence, not agent instructions.
+
+**Weekly execution requires a worker.** Register the storefront with
+`gmc_set_policy_monitoring`, then schedule this command **hourly** using cron,
+Windows Task Scheduler or your service manager:
+
+```bash
+gmc-mcp --env /absolute/path/to/.env policy-monitor-run
+```
+
+The worker audits only due stores, then schedules the next run seven days later.
+SQLite leases prevent concurrent duplicate work; failed executions record the
+full error and retry no earlier than one hour later. Read the persisted alerts
+with `gmc_get_policy_monitoring`. Alerts include score and account-issue changes
+and incomplete assessment state. No email, external notification delivery or
+automatic appeals are included. The host and worker must be available at the
+scheduled time; registering an MCP schedule alone does not install an OS task.
+
+## Development checks
 
 ```bash
 pytest                       # 100% offline; uses respx to mock HTTP

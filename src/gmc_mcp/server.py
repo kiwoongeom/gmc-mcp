@@ -102,5 +102,6 @@ def build_server(config: Config | None = None, env_file: Path | None = None) -> 
     tools.bulk.register(mcp, client)
     tools.diagnostics.register(mcp, client)
     tools.regions.register(mcp, client)
+    tools.policy.register(mcp, client)
 
     return mcp
