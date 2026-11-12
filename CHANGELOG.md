@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Compatibility
 - Preserve all existing 126 MCP tools; total registered tools is now 134.
+- Keep the 12 OS/Python CI combinations and select the supported macOS Intel
+  runner explicitly after arm64 runner allocation left release checks queued.
 - No external LLM dependency, automatic Merchant API writes, appeal submission,
   official Google risk score or guarantee of policy compliance.
 
