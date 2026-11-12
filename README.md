@@ -2,6 +2,9 @@
 
 # Google Merchant Center MCP (GMC MCP)
 
+> **0.3.0 policy-audit issue under review:** HTTP 200 error pages with shared footer text can incorrectly receive passing checks and a zero risk score. Do not rely on the new policy score for compliance or appeal readiness. See the [correctness notice](https://github.com/kiwoongeom/gmc-mcp/releases/tag/v0.3.0). A fix candidate is being checked and has not been released.
+
+
 [![PyPI](https://img.shields.io/pypi/v/gmc-mcp.svg)](https://pypi.org/project/gmc-mcp/)
 [![Downloads](https://static.pepy.tech/badge/gmc-mcp)](https://pepy.tech/projects/gmc-mcp)
 [![Downloads/month](https://static.pepy.tech/badge/gmc-mcp/month)](https://pepy.tech/projects/gmc-mcp)
