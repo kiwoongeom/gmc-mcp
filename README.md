@@ -8,7 +8,7 @@ Google Merchant Center MCP (GMC MCP) brings Merchant Center data and storefront 
 
 Built on Merchant API v1, with 60 focused tools in an MIT-licensed Python package.
 
-> **0.3.1:** a focused 60-tool configuration for catalog insights, Merchant Center queries and storefront policy workflows.
+> **0.3.2:** a focused 60-tool configuration for catalog insights, Merchant Center queries and storefront policy workflows.
 
 ## What you can do
 
@@ -165,6 +165,8 @@ The auditor reads public HTTPS pages and linked contact, business, return/refund
 
 The risk score is a **heuristic assessment of observed storefront content**, not a Google score or approval guarantee. Unknown or missing evidence is kept distinct from a passed check; insufficient coverage produces an unassessed score. Official account issues remain separate from the storefront score.
 
+An audit defaults to a maximum of eight pages within a 24-second collection window. URLs skipped by these limits appear in `skipped_pages` with `requested: false` and `page_limit_reached` or `audit_deadline_reached`. Fix plans and appeal drafts call for collection or manual inspection rather than claiming these policies are missing. Incomplete assessment does not receive a clean score.
+
 For weekly reviews, save a schedule with `gmc_set_policy_monitoring`. An OS scheduler or service must invoke the worker; saving a schedule alone does not start unattended monitoring:
 
 ```bash
@@ -173,7 +175,7 @@ gmc-mcp --env /absolute/path/to/.env policy-monitor-run
 
 The worker runs audits that are due and records local alerts. Appeal generation saves a draft for review. External notification delivery and automatic appeal submission are not included.
 
-## Supported scope and existing evidence
+## Supported scope and validation
 
 The default list is based on previously recorded Merchant API responses and executed local workflows. Successful empty lists and reports count as accepted queries; they do not establish populated-output behavior. API errors remain errors. Report data and program access depend on the merchant account.
 
@@ -183,7 +185,7 @@ Policy audit, saved reports, fix plans, appeal drafts, schedule storage and due-
 
 Product/catalog writes, bulk updates, deletion and rollback are outside this default tool set. Review APIs, omnichannel setup, LFP operations and unsupported compatibility placeholders are also excluded. Reading linked Business Profiles does not enable omnichannel setup. Program review lookup reports eligibility and unmet requirements; it does not submit a manual review.
 
-Release 0.3.1 reuses the recorded execution evidence described above. The 60-tool configuration was not subjected to a new test run or runtime check for this release. Packaging and publication do not establish additional functional coverage.
+Release 0.3.2 uses one integrated release candidate. Release notes distinguish offline regression checks, live read/policy flows and preview-only checkout creation. Google approval, arbitrary merchant compatibility and seven-day unattended operation are not guaranteed.
 
 ## Development
 

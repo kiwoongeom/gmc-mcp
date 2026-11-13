@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "gmc-mcp"
-version = "0.3.1"
+version = "0.3.2"
 description = "Google Merchant Center MCP (GMC MCP): 60 tools for catalog insights, Shopping reports, issue diagnostics, policy audits, fix plans and appeal drafts."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -92,6 +92,7 @@ include = [
     "/examples",
     "/README.md",
     "/CHANGELOG.md",
+    "/server.json",
     "/CONTRIBUTING.md",
     "/LICENSE",
     "/pyproject.toml",

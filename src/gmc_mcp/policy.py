@@ -374,13 +374,29 @@ class PolicyAuditor:
         checks = []
         pages = []
         fetched: dict[str, dict] = {}
+        skipped: dict[str, dict] = {}
         deadline = time.monotonic() + 24
 
         def fetch(target: str) -> dict:
-            if target not in fetched and len(fetched) < max_pages and time.monotonic() < deadline:
-                fetched[target] = self.fetcher(target, raw, urlsplit(url).hostname or "")
-                pages.append({k: v for k, v in fetched[target].items() if k != "html"})
-            return fetched.get(target, {"usable": False, "html": "", "url": target})
+            if target in fetched:
+                return fetched[target]
+            reason = (
+                "page_limit_reached"
+                if len(fetched) >= max_pages
+                else "audit_deadline_reached"
+                if time.monotonic() >= deadline
+                else None
+            )
+            if reason:
+                skipped[target] = {
+                    "url": target,
+                    "requested": False,
+                    "unusable_reason": reason,
+                }
+                return {**skipped[target], "usable": False, "html": ""}
+            fetched[target] = self.fetcher(target, raw, urlsplit(url).hostname or "")
+            pages.append({k: v for k, v in fetched[target].items() if k != "html"})
+            return fetched[target]
 
         home = fetch(url)
         parsed = Page(home["html"])
@@ -463,7 +479,14 @@ class PolicyAuditor:
                         if status == "pass"
                         else "Verify timeframe and refund/shipping-cost wording; automatic text check did not find both"
                     )
-            checks.append(self.check(name, status, page["url"], evidence))
+            check = self.check(name, status, page["url"], evidence)
+            if page.get("requested") is False:
+                check["recommendation"] = (
+                    "This URL was not requested because an audit limit was reached. "
+                    "Run with sufficient page/time budget or inspect the URL manually; "
+                    "do not infer that the policy is missing."
+                )
+            checks.append(check)
         account = {"status": "not_requested"}
         if include_account:
             try:
@@ -509,6 +532,7 @@ class PolicyAuditor:
             else "low",
             "score_meaning": "Heuristic observed-risk score, 0=lowest observed risk, 100=highest. Not a Google score or approval guarantee.",
             "coverage": round(coverage, 3),
+            "skipped_pages": list(skipped.values()),
             "checks": checks,
             "account": account,
             "pages": pages,

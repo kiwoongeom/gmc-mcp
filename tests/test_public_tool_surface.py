@@ -38,7 +38,11 @@ def test_default_surface_and_removed_calls(config, client, monkeypatch):
                 await mcp.call_tool(name, {})
 
     asyncio.run(check())
-    assert {"gmc_product_performance", "gmc_list_regions", "gmc_list_local_inventories"} <= VERIFIED_TOOLS
+    assert {
+        "gmc_product_performance",
+        "gmc_list_regions",
+        "gmc_list_local_inventories",
+    } <= VERIFIED_TOOLS
     assert {
         "gmc_update_product",
         "gmc_rollback",

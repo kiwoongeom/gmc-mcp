@@ -127,10 +127,38 @@ def test_blocked_site_never_gets_clean_score(auditor: PolicyAuditor) -> None:
 
 def test_fetch_budget_reports_incomplete_coverage(auditor: PolicyAuditor) -> None:
     report = auditor.run("https://example.com/", max_pages=1)
+    assert len(report["skipped_pages"]) == 6
+    assert all(p["requested"] is False for p in report["skipped_pages"])
+    assert all(p["unusable_reason"] == "page_limit_reached" for p in report["skipped_pages"])
+    assert all("page_limit_reached" in c["evidence"] for c in report["checks"][1:])
+    assert all("not requested" in c["recommendation"] for c in report["checks"][1:])
+    assert all(
+        "not requested" in c["recommendation"] for c in auditor.plan(report["audit_id"])["steps"]
+    )
+    assert "not requested" in auditor.appeal(report["audit_id"])["draft"]
     assert len(report["pages"]) == 1
     assert report["risk_score"] is None
     with pytest.raises(ValueError):
         auditor.run("https://example.com/", max_pages=9)
+
+
+def test_deadline_reports_not_requested_pages(auditor, monkeypatch):
+    clock = [100.0]
+    original_fetch = auditor.fetcher
+
+    def fetch(url, raw, origin):
+        page = original_fetch(url, raw, origin)
+        clock[0] = 125.0
+        return page
+
+    monkeypatch.setattr(policy.time, "monotonic", lambda: clock[0])
+    auditor.fetcher = fetch
+    report = auditor.run("https://example.com/")
+    assert report["risk_score"] is None
+    assert len(report["pages"]) == 1
+    assert len(report["skipped_pages"]) == 6
+    assert all(p["unusable_reason"] == "audit_deadline_reached" for p in report["skipped_pages"])
+    assert all("audit_deadline_reached" in c["evidence"] for c in report["checks"][1:])
 
 
 def test_partial_coverage_cannot_receive_zero_score(
